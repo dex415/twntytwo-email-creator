@@ -1,15 +1,21 @@
 # TWNTY-TWO® Email Creator
 
 Marketing email bodies in the TWNTY-TWO transactional style, for pasting into
-**Shopify Messaging → Add section → Custom → Custom Liquid**. Shopify renders
-the logo band above and the unsubscribe footer below; this tool builds the middle.
+**Shopify Messaging → Add section → Custom → Custom Liquid**. Shopify renders the
+logo band above and the unsubscribe footer below; this tool builds the middle.
 
 ## Critical layout note
 
 The card table carries `width:100%; max-width:520px; margin:0 auto`. The
 `margin:0 auto` is load-bearing — a width:100% table with a max-width is a block
-box, and `<td align="center">` does NOT centre it. Without it Shopify renders the
+box and `<td align="center">` does NOT centre it. Without it Shopify renders the
 card flush left. Card padding lives on a `<td>`, never on the width:100% table.
+
+## What does and doesn't export
+
+Subject and preheader are stored with the template but never appear in the
+Liquid — Custom Liquid cannot set them. Copy them into Shopify's Email details
+panel by hand (there are Copy buttons next to each).
 
 ## Product image sizing
 

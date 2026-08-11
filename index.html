@@ -71,6 +71,22 @@
   .chk{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--body)}
   .chk input{accent-color:#fff;width:14px;height:14px}
 
+  /* collapsible group for fields Shopify won't receive */
+  .notes{border:1px solid var(--hair);border-radius:8px;background:#0a0a0b;margin-bottom:2px}
+  .notes summary{cursor:pointer;list-style:none;padding:9px 11px;font-size:10px;font-weight:700;letter-spacing:.8px;color:var(--muted);text-transform:uppercase;display:flex;align-items:center;gap:8px}
+  .notes summary::-webkit-details-marker{display:none}
+  .notes summary::before{content:"\25B8";font-size:9px;transition:transform .15s;color:var(--faint)}
+  .notes[open] summary::before{transform:rotate(90deg)}
+  .notes summary b{margin-left:auto;font-size:9px;font-weight:800;letter-spacing:1px;color:var(--faint);border:1px solid var(--hair);border-radius:4px;padding:2px 6px}
+  .notes .nhint{margin:0 11px 10px;font-size:10.5px;color:var(--faint);line-height:1.6}
+  .notes .fld{padding:0 11px}
+  .notes .fld:last-child{padding-bottom:11px;margin-bottom:0}
+  /* .fld>span is more specific than .wc alone — must match it to win */
+  .fld>span.wc{display:flex;gap:5px;margin-bottom:0;text-transform:none;letter-spacing:0}
+  .fld>span.wc input{flex:1;width:auto}
+  .cpy{padding:0 10px;background:var(--well);border:1px solid var(--hair);border-radius:7px;color:var(--muted);font-size:11px;font-weight:600;white-space:nowrap}
+  .cpy:hover{color:#fff;border-color:var(--rule)}
+
   /* ---- block cards ---- */
   .bcard{background:var(--card);border:1px solid var(--hair);border-radius:9px;margin-bottom:6px;overflow:hidden}
   .bcard.sel{border-color:var(--rule)}
@@ -165,9 +181,16 @@
     <div class="sect">Email</div>
     <div class="metagrid">
       <label class="fld"><span>Template name</span><input id="tplname" type="text"></label>
-      <label class="fld"><span>Subject line</span><input id="subject" type="text" placeholder="Shows in the inbox"></label>
-      <label class="fld"><span>Preheader</span><input id="preheader" type="text" placeholder="Preview text after the subject"></label>
+
+      <details class="notes" id="notes">
+        <summary>Subject &amp; preheader <b>not exported</b></summary>
+        <p class="nhint">Custom Liquid can't set these. They're stored with the template so you have them to hand — paste each into Shopify's Email details panel.</p>
+        <label class="fld"><span>Subject line</span><span class="wc"><input id="subject" type="text" placeholder="COLLECTION NAME NOW AVAILABLE"><button class="cpy" data-copy="subject">Copy</button></span></label>
+        <label class="fld"><span>Preheader</span><span class="wc"><input id="preheader" type="text" placeholder="ORDERS OVER $100 — FREE SHIPPING"><button class="cpy" data-copy="preheader">Copy</button></span></label>
+      </details>
+
       <label class="fld"><span>Campaign tag (first line)</span><input id="eyebrow" type="text" placeholder="NEW DROP"></label>
+      <label class="chk"><input id="showtag" type="checkbox" checked> Show campaign tag</label>
       <label class="chk"><input id="showheader" type="checkbox"> Add TWNTY-TWO logo header <span style="color:var(--faint)">— off: Shopify already renders one</span></label>
       <label class="chk"><input id="aligncenter" type="checkbox" checked> Centre all text</label>
     </div>
@@ -735,11 +758,15 @@ function renderHeader(s) {
     '</tr></table></td></tr>';
 }
 
-/* When the logo header is off, the campaign tag becomes the first line of the card. */
+/* When the logo header is off, the campaign tag becomes the first line of the card.
+   Optional on its own — showTag false hides it without clearing the text. */
 function renderTag(s) {
-  if (s.showHeader || !s.eyebrow) return '';
-  return '<tr><td style="padding-bottom:14px;"><div style="font-size:12px;color:' + TT.muted +
-    ';font-weight:700;letter-spacing:1.6px;text-transform:uppercase;">' + esc(s.eyebrow) + '</div></td></tr>';
+  if (s.showTag === false || s.showHeader || !s.eyebrow) return '';
+  const al = s.align === 'left' ? 'left' : 'center';
+  return '<tr><td align="' + al + '" style="padding-bottom:14px;text-align:' + al + ';">' +
+    '<div style="font-size:12px;color:' + TT.muted +
+    ';font-weight:700;letter-spacing:1.6px;text-transform:uppercase;text-align:' + al + ';">' +
+    esc(s.eyebrow) + '</div></td></tr>';
 }
 
 /* Body only — this is what gets pasted into Shopify Email custom Liquid,
@@ -863,7 +890,7 @@ const SHIP_BAR = 'ORDERS OVER $100 — FREE SHIPPING 🇺🇸';
 function starterDrop() {
   return {
     id: uid(), name: 'Drop Announcement', kind: 'drop',
-    settings: { showHeader: false, eyebrow: 'NEW DROP', logoUrl: 'https://twnty-two.com', align: 'center',
+    settings: { showHeader: false, eyebrow: 'NEW DROP', logoUrl: 'https://twnty-two.com', align: 'center', showTag: true,
       subject: 'NEGRO LEAGUE COLLECTION NOW AVAILABLE', preheader: SHIP_BAR },
     blocks: [
       mkBlock('shipbar', { text: SHIP_BAR, href: '' }),
@@ -880,7 +907,7 @@ function starterDrop() {
 function starterSale() {
   return {
     id: uid(), name: 'Sale / Promo', kind: 'sale',
-    settings: { showHeader: false, eyebrow: 'LIMITED TIME', logoUrl: 'https://twnty-two.com', align: 'center',
+    settings: { showHeader: false, eyebrow: 'LIMITED TIME', logoUrl: 'https://twnty-two.com', align: 'center', showTag: true,
       subject: '20% OFF SITEWIDE — THIS WEEKEND ONLY', preheader: SHIP_BAR },
     blocks: [
       mkBlock('shipbar', { text: SHIP_BAR, href: '' }),
@@ -1010,6 +1037,7 @@ function renderMeta() {
   $('#subject').value = (tpl.settings && tpl.settings.subject) || '';
   $('#preheader').value = (tpl.settings && tpl.settings.preheader) || '';
   $('#showheader').checked = tpl.settings.showHeader === true;
+  $('#showtag').checked = tpl.settings.showTag !== false;
   $('#aligncenter').checked = (tpl.settings.align || 'center') === 'center';
 }
 
@@ -1102,6 +1130,14 @@ document.addEventListener('click', async (e) => {
     if (!confirm('Delete this saved template?')) return;
     await Store.remove(t.dataset.rm); refreshSaved(); toast('Deleted'); return;
   }
+  if (t.dataset.copy) {
+    const el = $('#' + t.dataset.copy);
+    if (!el || !el.value) { toast('Nothing to copy', true); return; }
+    try { await navigator.clipboard.writeText(el.value); }
+    catch (err) { el.select(); document.execCommand('copy'); }
+    toast(t.dataset.copy === 'subject' ? 'Subject copied' : 'Preheader copied');
+    return;
+  }
 });
 
 document.addEventListener('input', (e) => {
@@ -1130,6 +1166,7 @@ document.addEventListener('input', (e) => {
 
 document.addEventListener('change', (e) => {
   if (e.target.id === 'showheader') { tpl.settings.showHeader = e.target.checked; renderPreview(); }
+  if (e.target.id === 'showtag') { tpl.settings.showTag = e.target.checked; renderPreview(); }
   if (e.target.id === 'aligncenter') { tpl.settings.align = e.target.checked ? 'center' : 'left'; renderPreview(); }
   if (e.target.dataset.bid && e.target.tagName === 'SELECT') {
     const b = tpl.blocks.find(x => x.id === e.target.dataset.bid);
@@ -1210,7 +1247,7 @@ function bindToolbar() {
   $('#new-drop').onclick = () => { tpl = starterDrop(); selected = null; renderAll(); refreshSaved(); };
   $('#new-sale').onclick = () => { tpl = starterSale(); selected = null; renderAll(); refreshSaved(); };
   $('#new-blank').onclick = () => {
-    tpl = { id: uid(), name: 'Untitled Email', kind: 'custom', settings: { showHeader: false, eyebrow: '', align: 'center', subject: '', preheader: SHIP_BAR }, blocks: [mkBlock('headline'), mkBlock('button'), mkBlock('footer')] };
+    tpl = { id: uid(), name: 'Untitled Email', kind: 'custom', settings: { showHeader: false, eyebrow: '', align: 'center', showTag: true, subject: '', preheader: SHIP_BAR }, blocks: [mkBlock('headline'), mkBlock('button'), mkBlock('footer')] };
     selected = null; renderAll(); refreshSaved();
   };
 
