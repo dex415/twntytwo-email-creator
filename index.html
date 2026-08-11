@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="color-scheme" content="dark">
+<title>TWNTY-TWO® Email Creator</title>
+<style>
+  *{box-sizing:border-box}
+  :root{
+    --bg:#000; --panel:#0b0b0c; --card:#111; --well:#18181b; --rule:#3f3f46;
+    --hair:#222; --white:#fff; --text:#e8e8e8; --body:#aaa; --muted:#888; --faint:#777;
+    --link:#6ea8ff; --green:#4ade80;
+    --font:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Helvetica,Arial,sans-serif;
+  }
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font);font-size:13px;-webkit-font-smoothing:antialiased}
+  button{font-family:inherit;cursor:pointer}
+  input,textarea,select{font-family:inherit}
+
+  /* ---- top bar ---- */
+  .top{display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid var(--hair);background:var(--panel);position:sticky;top:0;z-index:20;flex-wrap:wrap}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.5px;font-size:13px;color:#fff;white-space:nowrap}
+  .brand img{width:28px;height:28px;border-radius:7px;display:block}
+  .brand small{display:block;font-size:10px;font-weight:600;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase}
+  .spacer{flex:1}
+  .btn{height:34px;padding:0 13px;background:var(--well);border:1px solid var(--rule);border-radius:8px;color:#fff;font-size:12px;font-weight:600;white-space:nowrap}
+  .btn:hover{background:#232327}
+  .btn.pri{background:#fff;color:#000;border-color:#fff}
+  .btn.pri:hover{background:#e6e6e6}
+  .btn.gh{background:transparent}
+  .badge{font-size:9px;font-weight:800;letter-spacing:1.2px;padding:4px 7px;border-radius:5px;background:var(--well);border:1px solid var(--rule);color:var(--muted)}
+  .badge.ok{color:var(--green);border-color:#1d4a2e}
+
+  /* ---- layout ---- */
+  .wrap{display:grid;grid-template-columns:212px minmax(320px,1fr) minmax(380px,1.15fr);height:calc(100vh - 63px);overflow:hidden}
+  @media(max-width:1100px){.wrap{grid-template-columns:1fr;height:auto;overflow:visible}}
+  .col{overflow-y:auto;padding:16px;border-right:1px solid var(--hair)}
+  .col:last-child{border-right:0}
+  .sect{font-size:10px;font-weight:800;letter-spacing:1.4px;color:var(--muted);text-transform:uppercase;margin:0 0 10px}
+  .sect.mt{margin-top:26px}
+
+  /* ---- palette ---- */
+  .plabel{font-size:9px;font-weight:800;letter-spacing:1.2px;color:var(--faint);text-transform:uppercase;margin:14px 0 6px}
+  .pgroup:first-child .plabel{margin-top:0}
+  .pitem{display:flex;justify-content:space-between;align-items:center;width:100%;padding:8px 10px;margin-bottom:4px;background:var(--card);border:1px solid var(--hair);border-radius:7px;color:var(--text);font-size:12px;text-align:left}
+  .pitem:hover{border-color:var(--rule);background:var(--well);color:#fff}
+  .plus{color:var(--faint);font-weight:700}
+
+  /* ---- saved ---- */
+  .sitem{display:flex;gap:4px;margin-bottom:4px}
+  .sopen{flex:1;text-align:left;padding:8px 10px;background:var(--card);border:1px solid var(--hair);border-radius:7px;color:var(--text)}
+  .sopen:hover{border-color:var(--rule)}
+  .sitem.cur .sopen{border-color:var(--rule);background:var(--well)}
+  .sname{display:block;font-size:12px;color:#fff;font-weight:600}
+  .smeta{display:block;font-size:10px;color:var(--faint);margin-top:2px;text-transform:uppercase;letter-spacing:.5px}
+  .srm{width:30px;background:var(--card);border:1px solid var(--hair);border-radius:7px;font-size:14px;line-height:1}
+
+  /* ---- meta fields ---- */
+  .metagrid{display:grid;gap:10px;margin-bottom:18px;padding-bottom:18px;border-bottom:1px solid var(--hair)}
+  .fld{display:block;margin-bottom:9px}
+  .fld>span{display:block;font-size:10px;font-weight:700;letter-spacing:.8px;color:var(--muted);text-transform:uppercase;margin-bottom:4px}
+  .fld input,.fld textarea,.fld select{width:100%;padding:8px 10px;background:#0a0a0b;border:1px solid var(--hair);border-radius:7px;color:#fff;font-size:12.5px;line-height:1.5}
+  .fld input:focus,.fld textarea:focus,.fld select:focus{outline:0;border-color:var(--rule);background:#0e0e10}
+  .fld textarea{resize:vertical;min-height:64px}
+  .chk{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--body)}
+  .chk input{accent-color:#fff;width:14px;height:14px}
+
+  /* ---- block cards ---- */
+  .bcard{background:var(--card);border:1px solid var(--hair);border-radius:9px;margin-bottom:6px;overflow:hidden}
+  .bcard.sel{border-color:var(--rule)}
+  .brow{display:flex;align-items:center;justify-content:space-between;padding:9px 11px;cursor:pointer}
+  .bcard.sel .brow{background:var(--well)}
+  .bname{font-size:12px;font-weight:600;color:#fff}
+  .bacts{display:flex;gap:3px}
+  .bacts button{width:24px;height:24px;background:transparent;border:1px solid var(--hair);border-radius:5px;color:var(--muted);font-size:10px;line-height:1;padding:0}
+  .bacts button:hover:not(:disabled){color:#fff;border-color:var(--rule)}
+  .bacts button:disabled{opacity:.25;cursor:default}
+  .bacts .dan:hover{color:#f87171;border-color:#7f1d1d}
+  .bedit{padding:12px 11px 4px;border-top:1px solid var(--hair)}
+  .nofields{font-size:11px;color:var(--faint);padding-bottom:10px}
+
+  /* ---- list editor ---- */
+  .lwrap{margin:4px 0 12px;padding:10px;background:#0a0a0b;border:1px solid var(--hair);border-radius:8px}
+  .llabel{font-size:10px;font-weight:800;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-bottom:8px}
+  .litem{padding:9px;margin-bottom:7px;background:var(--card);border:1px solid var(--hair);border-radius:7px}
+  .lhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;font-size:10px;font-weight:700;letter-spacing:.8px;color:var(--faint);text-transform:uppercase}
+  .ladd{width:100%;padding:7px;background:transparent;border:1px dashed var(--rule);border-radius:6px;color:var(--muted);font-size:11px;font-weight:600}
+  .ladd:hover{color:#fff;border-color:#666}
+
+  /* ---- preview ---- */
+  .pvhead{display:flex;align-items:center;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+  .vtab{height:28px;padding:0 11px;background:transparent;border:1px solid var(--hair);border-radius:6px;color:var(--muted);font-size:11px;font-weight:600}
+  .vtab.on{background:var(--well);border-color:var(--rule);color:#fff}
+  #previewwrap{display:flex;justify-content:center}
+  #frame{width:100%;height:calc(100vh - 150px);min-height:520px;border:1px solid var(--hair);border-radius:10px;background:#000;transition:max-width .2s}
+  @media(max-width:1100px){#frame{height:70vh}}
+  #codewrap{display:none}
+  #codeout{white-space:pre-wrap;word-break:break-word;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;line-height:1.6;color:#9ca3af;background:#0a0a0b;border:1px solid var(--hair);border-radius:10px;padding:14px;max-height:calc(100vh - 150px);overflow:auto}
+  #sizehint{font-size:10px;color:var(--faint);letter-spacing:.5px}
+
+  .empty{padding:26px 12px;text-align:center;font-size:12px;color:var(--faint);line-height:1.7;border:1px dashed var(--hair);border-radius:9px}
+  .empty.sm{padding:14px}
+
+  /* ---- modal ---- */
+  .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:50;align-items:center;justify-content:center;padding:20px}
+  .modal.on{display:flex}
+  .mbox{width:100%;max-width:460px;background:var(--card);border:1px solid var(--rule);border-radius:14px;padding:24px}
+  .mbox h3{margin:0 0 6px;font-size:15px;color:#fff}
+  .mbox p{margin:0 0 16px;font-size:12px;color:var(--body);line-height:1.7}
+  .mact{display:flex;gap:8px;margin-top:16px}
+
+  /* ---- toast ---- */
+  .toast{position:fixed;bottom:22px;left:50%;transform:translate(-50%,20px);background:#fff;color:#000;font-size:12px;font-weight:600;padding:11px 18px;border-radius:9px;opacity:0;pointer-events:none;transition:.22s;z-index:60;max-width:88vw;text-align:center}
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+  .toast.bad{background:#7f1d1d;color:#fecaca}
+  code{background:var(--well);padding:1px 5px;border-radius:4px;font-size:11px;color:#e8e8e8}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="brand">
+    <img src="https://help.twnty-two.nyc/logo.png" alt="">
+    <div>TWNTY-TWO<sup>&reg;</sup><small>Email Creator</small></div>
+  </div>
+  <span id="modebadge" class="badge">LOCAL</span>
+  <div class="spacer"></div>
+  <button class="btn gh" id="new-blank">Blank</button>
+  <button class="btn gh" id="new-drop">+ Drop</button>
+  <button class="btn gh" id="new-sale">+ Sale</button>
+  <button class="btn gh" id="howto">How to paste</button>
+  <button class="btn gh" id="settings">Settings</button>
+  <button class="btn" id="dl">.liquid</button>
+  <button class="btn" id="dlhtml">.html</button>
+  <button class="btn" id="dljson">.json</button>
+  <button class="btn" id="save">Save</button>
+  <button class="btn pri" id="copy">Copy Liquid</button>
+</div>
+
+<div class="wrap">
+
+  <!-- LEFT -->
+  <div class="col">
+    <div class="sect">Blocks</div>
+    <div id="palette"></div>
+    <div class="sect mt">Saved</div>
+    <div id="savedlist"></div>
+  </div>
+
+  <!-- MIDDLE -->
+  <div class="col">
+    <div class="sect">Email</div>
+    <div class="metagrid">
+      <label class="fld"><span>Template name</span><input id="tplname" type="text"></label>
+      <label class="fld"><span>Subject line</span><input id="subject" type="text" placeholder="Shows in the inbox"></label>
+      <label class="fld"><span>Preheader</span><input id="preheader" type="text" placeholder="Preview text after the subject"></label>
+      <label class="fld"><span>Campaign tag (first line)</span><input id="eyebrow" type="text" placeholder="NEW DROP"></label>
+      <label class="chk"><input id="showheader" type="checkbox"> Add TWNTY-TWO logo header <span style="color:var(--faint)">— off: Shopify already renders one</span></label>
+    </div>
+    <div class="sect">Blocks in this email</div>
+    <div id="blocklist"></div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="col">
+    <div class="pvhead">
+      <button class="vtab on" data-view="desktop">Desktop</button>
+      <button class="vtab" data-view="mobile">Mobile</button>
+      <button class="vtab" data-view="code">Code</button>
+      <div class="spacer"></div>
+      <span id="sizehint"></span>
+    </div>
+    <div id="previewwrap"><iframe id="frame" title="Email preview"></iframe></div>
+    <div id="codewrap"><pre id="codeout"></pre></div>
+  </div>
+
+</div>
+
+<div class="modal" id="modal">
+  <div class="mbox">
+    <h3>Saved templates storage</h3>
+    <p>Right now templates save to this browser only. When the TWNTY-TWO Supabase project is connected, paste its URL and <strong>anon</strong> key below and everything saves there instead — shared across machines. Run <code>supabase-schema.sql</code> on that project first.</p>
+    <label class="fld"><span>Supabase project URL</span><input id="sb-url" type="text" placeholder="https://xxxx.supabase.co"></label>
+    <label class="fld"><span>Anon public key</span><input id="sb-key" type="text" placeholder="eyJhbGciOi..."></label>
+    <div class="mact">
+      <button class="btn pri" id="sb-save">Save</button>
+      <button class="btn" id="sb-clear">Clear</button>
+      <div class="spacer"></div>
+      <button class="btn gh" id="modal-close">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="howmodal">
+  <div class="mbox">
+    <h3>Getting this into Shopify Email</h3>
+    <ol style="margin:0;padding-left:18px;font-size:12px;color:var(--body);line-height:1.9">
+      <li>Shopify admin &rarr; <strong>Messaging</strong> &rarr; <strong>Create message</strong> &rarr; Email.</li>
+      <li>Keep Shopify's logo band and its footer. This app only generates the middle &mdash; campaign tag down to the 4-button footer.</li>
+      <li>In the left <strong>Email colors</strong> panel set <em>Content background</em> to <code>#000000</code> and <em>Border</em> to <code>#000000</code>. Without this the campaign shell stays white and frames the dark card.</li>
+      <li>Delete the default image and button sections.</li>
+      <li><strong>Add section</strong> &rarr; scroll to <strong>Custom</strong> &rarr; <strong>Custom Liquid</strong>.</li>
+      <li>Hit <strong>Copy Liquid</strong> here, paste into that section.</li>
+      <li>Set Subject and Preview text from the fields in the middle column — Custom Liquid cannot set those.</li>
+      <li><strong>Send test</strong> to yourself before scheduling.</li>
+    </ol>
+    <p style="margin-top:14px">Shopify always appends its own footer (social icons, Bronx address, unsubscribe, copyright) below your content. That is required and can't be removed, so the Footer Grid block is optional — use it when you want the Customer Service / Subscribe buttons, skip it to keep the email short.</p>
+    <p>Prefer Shopify's native <strong>Countdown</strong> section over the Launch Date block if you want a live timer — add it as a separate section above your Custom Liquid.</p>
+    <div class="mact"><div class="spacer"></div><button class="btn pri" id="how-close">Got it</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================================
+   TWNTY-TWO® Email Creator — Block Library
+   Design tokens + block definitions lifted from the Shopify order-status
+   notification templates so marketing email matches transactional email.
+   ========================================================================= */
+
+const TT = {
+  font: "-apple-system,'Helvetica Neue',Helvetica,Arial,sans-serif",
+  canvas: '#000',
+  card: '#111',
+  well: '#18181b',
+  rule: '#3f3f46',
+  hair: '#222',
+  white: '#fff',
+  text: '#e8e8e8',
+  body: '#aaa',
+  muted: '#888',
+  faint: '#777',
+  link: '#6ea8ff',
+  green: '#4ade80',
+  amberBg: '#1a1206',
+  amberRule: '#eab308',
+  amberHead: '#fbbf24',
+  amberText: '#e8d4a0',
+  logo: 'https://help.twnty-two.nyc/logo.png',
+  xx: 'https://help.twnty-two.nyc/xx.png',
+  ig: 'https://help.twnty-two.nyc/ig-icon.png',
+  width: 520
+};
+
+/* ---------- helpers ---------- */
+const nl2br = (s) => String(s == null ? '' : s).replace(/\r\n|\r|\n/g, '<br>');
+const esc = (s) => String(s == null ? '' : s);
+const row = (inner, pad) =>
+  '<tr><td style="' + (pad || 'padding-top:24px;') + '">' + inner + '</td></tr>';
+
+/* Shared atoms — identical markup to the transactional templates */
+const A = {
+  eyebrow: (t) =>
+    '<div style="font-size:11px;color:' + TT.muted + ';font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;">' + esc(t) + '</div>',
+
+  sectionTitle: (t) =>
+    '<div style="font-size:13px;color:' + TT.white + ';font-weight:700;letter-spacing:0.5px;text-transform:uppercase;margin-bottom:8px;">' + esc(t) + '</div>',
+
+  well: (html) =>
+    '<div style="background:' + TT.well + ';border-left:3px solid ' + TT.rule + ';border-radius:6px;padding:14px 16px;font-size:12px;color:' + TT.body + ';line-height:1.7;">' + html + '</div>',
+
+  arrowLink: (text, url) =>
+    !text ? '' :
+    '<div style="margin-top:8px;"><a href="' + esc(url || '#') + '" style="color:' + TT.link + ';text-decoration:none;font-size:12px;font-weight:600;">' + esc(text) + ' &rarr;</a></div>',
+
+  /* 56px bordered button — the exact footer-button pattern */
+  button: (text, url) =>
+    '<a href="' + esc(url || '#') + '" style="display:block;height:56px;box-sizing:border-box;text-align:center;background:' + TT.well + ';border:1px solid ' + TT.rule + ';border-radius:8px;color:' + TT.white + ';font-size:12px;font-weight:700;text-decoration:none;">' +
+    '<span style="display:inline-block;height:100%;vertical-align:middle;"></span>' +
+    '<span style="display:inline-block;vertical-align:middle;line-height:1.25;padding:0 6px;">' + text + '</span></a>',
+
+  /* Inverted / solid button for primary marketing CTAs */
+  buttonSolid: (text, url) =>
+    '<a href="' + esc(url || '#') + '" style="display:block;height:56px;box-sizing:border-box;text-align:center;background:' + TT.white + ';border:1px solid ' + TT.white + ';border-radius:8px;color:#000;font-size:12px;font-weight:700;letter-spacing:0.5px;text-decoration:none;">' +
+    '<span style="display:inline-block;height:100%;vertical-align:middle;"></span>' +
+    '<span style="display:inline-block;vertical-align:middle;line-height:1.25;padding:0 6px;">' + text + '</span></a>'
+};
+
+/* ---------- block definitions ---------- */
+const BLOCKS = [
+
+/* ============================== CONTENT ============================== */
+{
+  id: 'shipbar',
+  name: 'Announcement Bar',
+  group: 'Content',
+  hint: 'Thin strip pinned to the very top — the "ORDERS OVER $100 FREE SHIPPING" line as live text instead of preview-only. One per email; it never repeats at the bottom.',
+  fields: [
+    { key: 'text', label: 'Bar text', type: 'text', def: 'ORDERS OVER $100 — FREE SHIPPING 🇺🇸' },
+    { key: 'href', label: 'Links to (optional)', type: 'url', def: '' }
+  ],
+  render: (v) => {
+    const inner = '<div style="text-align:center;font-size:11px;font-weight:700;letter-spacing:1.5px;color:' + TT.text + ';text-transform:uppercase;">' + esc(v.text) + '</div>';
+    const wrapped = v.href ? '<a href="' + esc(v.href) + '" style="text-decoration:none;">' + inner + '</a>' : inner;
+    return '<tr><td style="padding-bottom:20px;"><div style="background:' + TT.well + ';border:1px solid ' + TT.rule + ';border-radius:8px;padding:11px 12px;">' + wrapped + '</div></td></tr>';
+  }
+},
+{
+  id: 'lockup',
+  name: 'Collection Lockup',
+  group: 'Content',
+  hint: 'Your signature stacked lockup as LIVE TEXT — the thing currently baked into the flat-lay image. Readable with images off.',
+  fields: [
+    { key: 'brand', label: 'Brand line', type: 'text', def: 'TWNTY-TWO®' },
+    { key: 'collection', label: 'Collection name', type: 'textarea', def: 'NEGRO LEAGUE COLLECTION' },
+    { key: 'status', label: 'Status line', type: 'text', def: 'AVAILABLE NOW!' },
+    { key: 'channel', label: 'Channel line (red)', type: 'text', def: 'ONLINE ONLY' }
+  ],
+  render: (v) =>
+    row('<table width="100%" cellpadding="0" cellspacing="0"><tr><td style="vertical-align:top;">' +
+      (v.brand ? '<div style="font-size:15px;color:' + TT.white + ';font-weight:800;letter-spacing:.5px;line-height:1.3;">' + esc(v.brand) + '</div>' : '') +
+      (v.collection ? '<div style="font-size:19px;color:' + TT.white + ';font-weight:800;letter-spacing:.5px;line-height:1.25;margin-top:2px;">' + nl2br(v.collection) + '</div>' : '') +
+      (v.status ? '<div style="font-size:19px;color:' + TT.white + ';font-weight:800;letter-spacing:.5px;line-height:1.25;">' + esc(v.status) + '</div>' : '') +
+      (v.channel ? '<div style="font-size:12px;color:#ef4444;font-weight:800;letter-spacing:1px;margin-top:6px;">' + esc(v.channel) + '</div>' : '') +
+      '</td><td width="34" style="vertical-align:top;text-align:right;padding-left:10px;">' +
+      '<img src="' + TT.xx + '" width="30" height="30" alt="XX" style="display:block;border:0;border-radius:5px;">' +
+      '</td></tr></table>', 'padding-top:18px;')
+},
+{
+  id: 'headline',
+  name: 'Headline + Body',
+  group: 'Content',
+  hint: 'The opening statement. Same type scale as "Thank you for your purchase!"',
+  fields: [
+    { key: 'eyebrow', label: 'Eyebrow (optional)', type: 'text', def: '' },
+    { key: 'title', label: 'Headline', type: 'text', def: 'The drop is live.' },
+    { key: 'body', label: 'Body copy', type: 'textarea', def: 'Limited run. Once it’s gone, it’s gone.' }
+  ],
+  render: (v) => {
+    let h = '';
+    if (v.eyebrow) h += '<tr><td style="padding-bottom:6px;">' + A.eyebrow(v.eyebrow) + '</td></tr>';
+    if (v.title) h += '<tr><td style="font-size:22px;color:' + TT.white + ';font-weight:700;padding-bottom:8px;line-height:1.3;">' + nl2br(v.title) + '</td></tr>';
+    if (v.body) h += '<tr><td style="font-size:13px;color:' + TT.body + ';line-height:1.7;padding-bottom:4px;">' + nl2br(v.body) + '</td></tr>';
+    return h;
+  }
+},
+{
+  id: 'text',
+  name: 'Paragraph',
+  group: 'Content',
+  hint: 'Plain body copy. Optional uppercase label above it.',
+  fields: [
+    { key: 'label', label: 'Label (optional)', type: 'text', def: '' },
+    { key: 'body', label: 'Body copy', type: 'textarea', def: 'Write your message here.' }
+  ],
+  render: (v) =>
+    row((v.label ? A.eyebrow(v.label) : '') +
+        '<div style="font-size:13px;color:' + TT.body + ';line-height:1.7;">' + nl2br(v.body) + '</div>')
+},
+{
+  id: 'notice',
+  name: 'Notice (amber)',
+  group: 'Content',
+  hint: 'The high-attention callout used for pre-order warnings.',
+  fields: [
+    { key: 'strong', label: 'Bold lead-in', type: 'text', def: 'Please note:' },
+    { key: 'body', label: 'Body copy', type: 'textarea', def: 'Sizes are limited. Orders ship in 3–7 business days.' }
+  ],
+  render: (v) =>
+    row('<div style="background:' + TT.amberBg + ';border-left:3px solid ' + TT.amberRule + ';border-radius:6px;padding:12px 14px;font-size:12px;color:' + TT.amberText + ';line-height:1.7;">' +
+        (v.strong ? '<strong style="color:' + TT.amberHead + ';">' + esc(v.strong) + '</strong> ' : '') +
+        nl2br(v.body) + '</div>', 'padding-top:18px;')
+},
+{
+  id: 'policy',
+  name: 'Info Card',
+  group: 'Content',
+  hint: 'Titled block with the left rule — matches Return Policy / Shipping cards.',
+  fields: [
+    { key: 'title', label: 'Title', type: 'text', def: 'Shipping' },
+    { key: 'body', label: 'Body copy', type: 'textarea', def: 'Please allow 3–7 business days for most deliveries.' },
+    { key: 'linkText', label: 'Link text (optional)', type: 'text', def: '' },
+    { key: 'linkUrl', label: 'Link URL', type: 'url', def: 'https://twnty-two.com/pages/delivery' }
+  ],
+  render: (v) =>
+    row(A.sectionTitle(v.title) + A.well(nl2br(v.body)) + A.arrowLink(v.linkText, v.linkUrl))
+},
+{
+  id: 'details',
+  name: 'Detail Rows',
+  group: 'Content',
+  hint: 'Label / value rows — the Order Summary pattern. Perfect for drop details.',
+  fields: [
+    { key: 'label', label: 'Section label', type: 'text', def: 'Drop Details' },
+    { key: 'rows', label: 'Rows', type: 'list', sub: [
+        { key: 'k', label: 'Label', type: 'text', def: 'Releases' },
+        { key: 'v', label: 'Value', type: 'text', def: 'Friday, 12PM EST' },
+        { key: 'href', label: 'Value link (optional)', type: 'url', def: '' }
+      ], def: [
+        { k: 'Releases', v: 'Friday, 12PM EST', href: '' },
+        { k: 'Quantity', v: 'Limited run', href: '' },
+        { k: 'Where', v: 'twnty-two.com', href: 'https://twnty-two.com' }
+      ]
+    },
+    { key: 'note', label: 'Fine print (optional)', type: 'textarea', def: '' }
+  ],
+  render: (v) => {
+    let r = (v.rows || []).map((x, i) => {
+      const pad = i === 0 ? '' : 'padding-top:8px;';
+      const val = x.href
+        ? '<a href="' + esc(x.href) + '" style="color:' + TT.link + ';text-decoration:underline;">' + esc(x.v) + '</a>'
+        : esc(x.v);
+      return '<tr><td style="' + pad + 'font-size:12px;color:' + TT.muted + ';">' + esc(x.k) + '</td>' +
+             '<td style="' + pad + 'font-size:13px;color:' + TT.text + ';text-align:right;">' + val + '</td></tr>';
+    }).join('');
+    if (v.note) r += '<tr><td colspan="2" style="padding-top:8px;font-size:11px;color:' + TT.faint + ';line-height:1.6;">' + nl2br(v.note) + '</td></tr>';
+    return row(A.eyebrow(v.label) + '<table width="100%" cellpadding="0" cellspacing="0">' + r + '</table>', 'padding:18px 0 4px;');
+  }
+},
+{
+  id: 'dropdetails',
+  name: 'Drop Details',
+  group: 'Content',
+  hint: 'Release status, availability and fulfilment — the fine print changes automatically with the toggles.',
+  fields: [
+    { key: 'label', label: 'Section label', type: 'text', def: 'Drop Details' },
+
+    { key: 'status', label: 'Release status', type: 'select', options: ['Unreleased', 'Released'], def: 'Unreleased' },
+    { key: 'releaseDate', label: 'Release date & time', type: 'text', def: 'Friday, August 15, 2026 at 2:22PM Eastern', showIf: { key: 'status', is: 'Unreleased' } },
+    { key: 'releasedText', label: 'When it went live', type: 'text', def: 'Today, 12:00PM Eastern', showIf: { key: 'status', is: 'Released' } },
+
+    { key: 'availability', label: 'Availability', type: 'select', options: ['Online Only', 'Online & In-Store', 'Pop-Up Event'], def: 'Online Only' },
+    { key: 'eventDetail', label: 'Pop-up detail (venue, date)', type: 'text', def: '', showIf: { key: 'availability', is: 'Pop-Up Event' } },
+
+    { key: 'fulfillment', label: 'Fulfilment', type: 'select', options: ['In Stock', 'Pre-Order'], def: 'In Stock' },
+    { key: 'shipText', label: 'Ships in', type: 'text', def: '3–7 business days', showIf: { key: 'fulfillment', is: 'In Stock' } },
+    { key: 'preorderUrl', label: 'Pre-order policy URL', type: 'url', def: 'https://twnty-two.com/pages/delivery', showIf: { key: 'fulfillment', is: 'Pre-Order' } }
+  ],
+  render: (v) => {
+    const pre = v.fulfillment === 'Pre-Order';
+    const line = (k, val, first) =>
+      '<tr><td style="' + (first ? '' : 'padding-top:8px;') + 'font-size:12px;color:' + TT.muted + ';">' + k + '</td>' +
+      '<td style="' + (first ? '' : 'padding-top:8px;') + 'font-size:13px;color:' + TT.text + ';text-align:right;">' + val + '</td></tr>';
+
+    let r = '';
+
+    /* release status */
+    if (v.status === 'Released') r += line('Released', esc(v.releasedText), true);
+    else r += line('Releases', esc(v.releaseDate), true);
+
+    /* availability */
+    r += line('Availability', esc(v.availability));
+    if (v.availability === 'Pop-Up Event' && v.eventDetail)
+      r += '<tr><td colspan="2" style="padding-top:3px;font-size:11px;color:' + TT.faint + ';text-align:right;line-height:1.6;">' + esc(v.eventDetail) + '</td></tr>';
+
+    /* fulfilment */
+    r += line('Ships', pre
+      ? '<a href="' + esc(v.preorderUrl) + '" style="color:' + TT.link + ';text-decoration:underline;">See Pre-Order Policy</a>'
+      : esc(v.shipText));
+
+    /* fine print — pre-order only */
+    if (pre) r += '<tr><td colspan="2" style="padding-top:8px;font-size:11px;color:' + TT.faint + ';line-height:1.6;">' +
+      '<strong style="color:#999;">Please note:</strong> Pre-order items ship on the timeline listed in our Shipping Policy.</td></tr>';
+
+    return row(A.eyebrow(v.label) + '<table width="100%" cellpadding="0" cellspacing="0">' + r + '</table>', 'padding:18px 0 4px;');
+  }
+},
+{
+  id: 'divider',
+  name: 'Divider',
+  group: 'Content',
+  hint: '1px hairline rule.',
+  fields: [],
+  render: () => '<tr><td style="padding-top:20px;border-top:1px solid ' + TT.hair + ';font-size:0;line-height:0;">&nbsp;</td></tr>'
+},
+{
+  id: 'spacer',
+  name: 'Spacer',
+  group: 'Content',
+  hint: 'Vertical breathing room.',
+  fields: [{ key: 'h', label: 'Height (px)', type: 'number', def: 24 }],
+  render: (v) => '<tr><td style="font-size:0;line-height:0;height:' + (v.h || 24) + 'px;">&nbsp;</td></tr>'
+},
+
+/* =============================== MEDIA =============================== */
+{
+  id: 'image',
+  name: 'Image',
+  group: 'Media',
+  hint: 'Full-width hero or lifestyle shot. Host on a CDN — no local files.',
+  fields: [
+    { key: 'src', label: 'Image URL', type: 'url', def: 'https://help.twnty-two.nyc/logo.png' },
+    { key: 'alt', label: 'Alt text', type: 'text', def: 'TWNTY-TWO' },
+    { key: 'href', label: 'Links to (optional)', type: 'url', def: 'https://twnty-two.com' },
+    { key: 'caption', label: 'Caption (optional)', type: 'text', def: '' }
+  ],
+  render: (v) => {
+    let img = '<img src="' + esc(v.src) + '" width="452" alt="' + esc(v.alt) + '" style="display:block;border:0;border-radius:10px;width:100%;max-width:452px;height:auto;background:#000;">';
+    if (v.href) img = '<a href="' + esc(v.href) + '" style="text-decoration:none;">' + img + '</a>';
+    if (v.caption) img += '<div style="font-size:11px;color:' + TT.faint + ';line-height:1.6;margin-top:8px;">' + esc(v.caption) + '</div>';
+    return row(img, 'padding-top:20px;');
+  }
+},
+{
+  id: 'imagePair',
+  name: 'Image Pair',
+  group: 'Media',
+  hint: 'Two images side by side — lookbook / colorway comparison.',
+  fields: [
+    { key: 'aSrc', label: 'Left image URL', type: 'url', def: '' },
+    { key: 'aHref', label: 'Left links to', type: 'url', def: '' },
+    { key: 'bSrc', label: 'Right image URL', type: 'url', def: '' },
+    { key: 'bHref', label: 'Right links to', type: 'url', def: '' }
+  ],
+  render: (v) => {
+    const cell = (src, href, side) => {
+      let img = '<img src="' + esc(src) + '" width="218" alt="" style="display:block;border:0;border-radius:10px;width:100%;max-width:218px;height:auto;background:#000;">';
+      if (href) img = '<a href="' + esc(href) + '" style="text-decoration:none;">' + img + '</a>';
+      return '<td width="50%" style="padding:' + (side === 'l' ? '0 4px 0 0' : '0 0 0 4px') + ';vertical-align:top;">' + img + '</td>';
+    };
+    return row('<table width="100%" cellpadding="0" cellspacing="0"><tr>' +
+      cell(v.aSrc, v.aHref, 'l') + cell(v.bSrc, v.bHref, 'r') + '</tr></table>', 'padding-top:20px;');
+  }
+},
+{
+  id: 'productGrid',
+  name: 'Product Grid',
+  group: 'Media',
+  hint: 'Two-up product cards with image, name and price.',
+  fields: [
+    { key: 'label', label: 'Section label (optional)', type: 'text', def: 'In This Drop' },
+    { key: 'items', label: 'Products', type: 'list', sub: [
+        { key: 'img', label: 'Image URL', type: 'url', def: '' },
+        { key: 'title', label: 'Name', type: 'text', def: 'Product name' },
+        { key: 'price', label: 'Price', type: 'text', def: '$00' },
+        { key: 'href', label: 'Links to', type: 'url', def: 'https://twnty-two.com' }
+      ], def: [
+        { img: '', title: 'Product One', price: '$120', href: 'https://twnty-two.com' },
+        { img: '', title: 'Product Two', price: '$95', href: 'https://twnty-two.com' }
+      ]
+    }
+  ],
+  render: (v) => {
+    const items = v.items || [];
+    let out = '';
+    for (let i = 0; i < items.length; i += 2) {
+      const cells = [items[i], items[i + 1]].map((it, j) => {
+        if (!it) return '<td width="50%"></td>';
+        const img = '<img src="' + esc(it.img) + '" width="218" alt="' + esc(it.title) + '" style="display:block;border:0;border-radius:10px;width:100%;max-width:218px;height:auto;background:#000;">';
+        return '<td width="50%" style="padding:' + (j === 0 ? '0 4px 12px 0' : '0 0 12px 4px') + ';vertical-align:top;">' +
+          '<a href="' + esc(it.href) + '" style="text-decoration:none;">' + img + '</a>' +
+          '<div style="font-size:13px;color:' + TT.white + ';font-weight:600;margin-top:8px;line-height:1.4;">' + esc(it.title) + '</div>' +
+          '<div style="font-size:12px;color:' + TT.muted + ';margin-top:2px;">' + esc(it.price) + '</div></td>';
+      }).join('');
+      out += '<tr>' + cells + '</tr>';
+    }
+    return row((v.label ? A.eyebrow(v.label) : '') +
+      '<table width="100%" cellpadding="0" cellspacing="0">' + out + '</table>', 'padding-top:22px;');
+  }
+},
+{
+  id: 'productRow',
+  name: 'Product List',
+  group: 'Media',
+  hint: 'Horizontal rows — the exact line-item layout from order confirmation.',
+  fields: [
+    { key: 'label', label: 'Section label (optional)', type: 'text', def: 'Featured' },
+    { key: 'items', label: 'Products', type: 'list', sub: [
+        { key: 'img', label: 'Image URL', type: 'url', def: '' },
+        { key: 'title', label: 'Name', type: 'text', def: 'Product name' },
+        { key: 'meta', label: 'Detail line', type: 'text', def: 'Black / All sizes' },
+        { key: 'price', label: 'Price', type: 'text', def: '$00' },
+        { key: 'href', label: 'Links to', type: 'url', def: 'https://twnty-two.com' }
+      ], def: [{ img: '', title: 'Product name', meta: 'Black / All sizes', price: '$120', href: 'https://twnty-two.com' }]
+    }
+  ],
+  render: (v) => {
+    const rows = (v.items || []).map((it) =>
+      '<tr>' +
+      (it.img ? '<td width="56" style="padding:10px 12px 10px 0;vertical-align:top;"><a href="' + esc(it.href) + '"><img src="' + esc(it.img) + '" width="48" height="48" alt="" style="display:block;border:0;border-radius:8px;background:#000;"></a></td>' : '') +
+      '<td style="padding:10px 0;font-size:13px;color:' + TT.text + ';vertical-align:top;">' +
+        '<a href="' + esc(it.href) + '" style="color:' + TT.white + ';text-decoration:none;">' + esc(it.title) + '</a>' +
+        (it.meta ? '<div style="font-size:11px;color:' + TT.faint + ';margin-top:3px;line-height:1.5;">' + esc(it.meta) + '</div>' : '') +
+      '</td>' +
+      '<td style="padding:10px 0;font-size:13px;color:' + TT.text + ';text-align:right;white-space:nowrap;vertical-align:top;">' + esc(it.price) + '</td>' +
+      '</tr>').join('');
+    return row((v.label ? A.eyebrow(v.label) : '') +
+      '<table width="100%" cellpadding="0" cellspacing="0">' + rows + '</table>', 'padding-top:12px;border-top:1px solid ' + TT.hair + ';');
+  }
+},
+
+/* ============================= COMMERCE ============================= */
+{
+  id: 'code',
+  name: 'Discount Code',
+  group: 'Commerce',
+  hint: 'Big code chip with terms underneath.',
+  fields: [
+    { key: 'label', label: 'Label above code', type: 'text', def: 'Use Code At Checkout' },
+    { key: 'code', label: 'Code', type: 'text', def: 'TWNTYTWO20' },
+    { key: 'desc', label: 'What it does', type: 'text', def: '20% off sitewide' },
+    { key: 'terms', label: 'Terms / expiry', type: 'textarea', def: 'Ends Sunday at 11:59PM EST. Cannot be combined with other offers. Excludes pre-orders.' },
+    { key: 'btnText', label: 'Button text', type: 'text', def: 'Shop The Sale' },
+    { key: 'btnUrl', label: 'Button URL', type: 'url', def: 'https://twnty-two.com' }
+  ],
+  render: (v) =>
+    row(A.eyebrow(v.label) +
+      '<div style="background:' + TT.well + ';border:1px dashed ' + TT.rule + ';border-radius:8px;padding:18px 16px;text-align:center;">' +
+        '<div style="font-size:24px;color:' + TT.white + ';font-weight:700;letter-spacing:3px;font-family:' + TT.font + ';">' + esc(v.code) + '</div>' +
+        (v.desc ? '<div style="font-size:12px;color:' + TT.green + ';margin-top:6px;font-weight:600;">' + esc(v.desc) + '</div>' : '') +
+      '</div>' +
+      (v.terms ? '<div style="font-size:11px;color:' + TT.faint + ';line-height:1.6;margin-top:8px;">' + nl2br(v.terms) + '</div>' : '') +
+      (v.btnText ? '<div style="margin-top:14px;">' + A.buttonSolid(esc(v.btnText), v.btnUrl) + '</div>' : ''),
+      'padding-top:22px;')
+},
+{
+  id: 'countdown',
+  name: 'Launch Date',
+  group: 'Commerce',
+  hint: 'Static date/time card. Email clients cannot run live timers.',
+  fields: [
+    { key: 'label', label: 'Label', type: 'text', def: 'Drops In' },
+    { key: 'date', label: 'Date line', type: 'text', def: 'FRIDAY, AUGUST 15' },
+    { key: 'time', label: 'Time line', type: 'text', def: '12:00 PM EST' },
+    { key: 'note', label: 'Note (optional)', type: 'text', def: 'Set a reminder — this one will move fast.' }
+  ],
+  render: (v) =>
+    row('<div style="background:' + TT.well + ';border:1px solid ' + TT.rule + ';border-radius:10px;padding:20px 16px;text-align:center;">' +
+        (v.label ? '<div style="font-size:11px;color:' + TT.muted + ';font-weight:700;letter-spacing:1px;text-transform:uppercase;">' + esc(v.label) + '</div>' : '') +
+        '<div style="font-size:20px;color:' + TT.white + ';font-weight:700;letter-spacing:1px;margin-top:8px;">' + esc(v.date) + '</div>' +
+        (v.time ? '<div style="font-size:14px;color:' + TT.text + ';margin-top:4px;letter-spacing:1px;">' + esc(v.time) + '</div>' : '') +
+        (v.note ? '<div style="font-size:11px;color:' + TT.faint + ';margin-top:10px;line-height:1.6;">' + esc(v.note) + '</div>' : '') +
+      '</div>', 'padding-top:22px;')
+},
+
+/* ============================== ACTION ============================== */
+{
+  id: 'button',
+  name: 'Button',
+  group: 'Action',
+  hint: 'Full-width CTA. Solid = primary, outline = secondary.',
+  fields: [
+    { key: 'text', label: 'Button text', type: 'text', def: 'Shop Now' },
+    { key: 'url', label: 'URL', type: 'url', def: 'https://twnty-two.com' },
+    { key: 'style', label: 'Style', type: 'select', options: ['Solid (white)', 'Outline (dark)'], def: 'Solid (white)' }
+  ],
+  render: (v) =>
+    row(v.style === 'Outline (dark)' ? A.button(esc(v.text), v.url) : A.buttonSolid(esc(v.text), v.url), 'padding-top:20px;')
+},
+{
+  id: 'buttonPair',
+  name: 'Button Pair',
+  group: 'Action',
+  hint: 'Two buttons side by side.',
+  fields: [
+    { key: 'aText', label: 'Left text', type: 'text', def: 'Shop Men' },
+    { key: 'aUrl', label: 'Left URL', type: 'url', def: 'https://twnty-two.com' },
+    { key: 'bText', label: 'Right text', type: 'text', def: 'Shop Women' },
+    { key: 'bUrl', label: 'Right URL', type: 'url', def: 'https://twnty-two.com' }
+  ],
+  render: (v) =>
+    row('<table width="100%" cellpadding="0" cellspacing="0"><tr>' +
+      '<td width="50%" style="padding:0 4px 0 0;">' + A.button(esc(v.aText), v.aUrl) + '</td>' +
+      '<td width="50%" style="padding:0 0 0 4px;">' + A.button(esc(v.bText), v.bUrl) + '</td>' +
+      '</tr></table>', 'padding-top:20px;')
+},
+{
+  id: 'footer',
+  name: 'Footer Grid',
+  group: 'Action',
+  hint: 'The 4-button footer from every transactional email. Keep it last. Shopify still appends its own social/address/unsubscribe footer below this — that one is required and cannot be removed.',
+  fields: [
+    { key: 'tagline', label: 'Brand tagline', type: 'text', def: 'TWNTY-TWO® THE OFFICIAL CROWN OF THE CULTURE. XX MARKS THE SPOT™' },
+    { key: 'closing', label: 'Closing line', type: 'textarea', def: 'Questions? Visit our Customer Service Center. Thank you for your support.' },
+    { key: 'shopUrl', label: 'Shop URL', type: 'url', def: 'https://twnty-two.com' },
+    { key: 'csUrl', label: 'Customer Service URL', type: 'url', def: 'https://help.twnty-two.nyc' },
+    { key: 'igUrl', label: 'Instagram URL', type: 'url', def: 'https://instagram.com/twntytwo_xx' },
+    { key: 'subUrl', label: 'Subscribe URL', type: 'url', def: 'https://subscribe.twnty-two.nyc' }
+  ],
+  render: (v) => {
+    const shop = 'Shop <span style="white-space:nowrap;">TWNTY-TWO&reg;&nbsp;<img src="' + TT.xx + '" width="14" height="14" alt="" style="border:0;border-radius:3px;vertical-align:middle;"></span>';
+    const ig = 'Follow Us on <span style="white-space:nowrap;">Instagram&nbsp;<img src="' + TT.ig + '" width="14" height="14" alt="" style="border:0;border-radius:3px;vertical-align:middle;"></span>';
+    let h = '';
+    if (v.tagline || v.closing) {
+      h += '<tr><td style="padding-top:26px;border-top:1px solid ' + TT.hair + ';">' +
+        (v.tagline ? '<div style="font-size:9px;color:' + TT.muted + ';font-weight:700;letter-spacing:.6px;line-height:1.6;margin-top:16px;">' + esc(v.tagline) + '</div>' : '') +
+        (v.closing ? '<p style="font-size:12px;color:' + TT.body + ';margin:' + (v.tagline ? '10px' : '14px') + ' 0 0;line-height:1.7;">' + nl2br(v.closing) + '</p>' : '') +
+        '</td></tr>';
+    }
+    h += '<tr><td style="padding-top:20px;"><table width="100%" cellpadding="0" cellspacing="0">' +
+      '<tr><td width="50%" style="padding:0 4px 8px 0;">' + A.button(shop, v.shopUrl) + '</td>' +
+      '<td width="50%" style="padding:0 0 8px 4px;">' + A.button('Customer Service Center', v.csUrl) + '</td></tr>' +
+      '<tr><td width="50%" style="padding:0 4px 0 0;">' + A.button(ig, v.igUrl) + '</td>' +
+      '<td width="50%" style="padding:0 0 0 4px;">' + A.button('Subscribe to<br>Emails &amp; Texts', v.subUrl) + '</td></tr>' +
+      '</table></td></tr>';
+    return h;
+  }
+}
+];
+
+const BLOCK_BY_ID = {};
+BLOCKS.forEach(b => { BLOCK_BY_ID[b.id] = b; });
+
+/* ---------- document assembly ----------
+   Shopify Messaging already renders the logo band above and the social /
+   address / unsubscribe footer below, so the logo header is OFF by default.
+   The campaign tag ("NEW DROP") then leads the card instead. */
+function renderHeader(s) {
+  if (!s.showHeader) return '';
+  return '<tr><td align="center" style="padding:44px 20px 20px;">' +
+    '<table width="100%" cellpadding="0" cellspacing="0" style="max-width:' + TT.width + 'px;"><tr>' +
+    '<td style="text-align:left;"><a href="' + esc(s.logoUrl || 'https://twnty-two.com') + '"><img src="' + TT.logo + '" width="72" height="72" alt="TWNTY-TWO&reg;" style="display:block;border:0;border-radius:12px;"></a></td>' +
+    '<td style="text-align:right;font-size:13px;color:' + TT.muted + ';font-weight:600;letter-spacing:1px;">' + esc(s.eyebrow || '') + '</td>' +
+    '</tr></table></td></tr>';
+}
+
+/* When the logo header is off, the campaign tag becomes the first line of the card. */
+function renderTag(s) {
+  if (s.showHeader || !s.eyebrow) return '';
+  return '<tr><td style="padding-bottom:14px;"><div style="font-size:12px;color:' + TT.muted +
+    ';font-weight:700;letter-spacing:1.6px;text-transform:uppercase;">' + esc(s.eyebrow) + '</div></td></tr>';
+}
+
+/* Body only — this is what gets pasted into Shopify Email custom Liquid,
+   between the campaign header and footer. */
+function buildBody(tpl) {
+  const s = tpl.settings || {};
+  const rows = (tpl.blocks || []).map(b => {
+    const def = BLOCK_BY_ID[b.type];
+    return def ? def.render(b.values || {}) : '';
+  }).join('\n      ');
+
+  return '<!-- ============================================================= -->\n' +
+    '<!-- TWNTY-TWO® — ' + esc(tpl.name || 'Marketing Email') + ' -->\n' +
+    '<!-- Paste into Shopify Email → Add section → Custom → Custom Liquid -->\n' +
+    '<!-- Shopify renders the logo band above and the unsubscribe footer below. -->\n' +
+    '<!-- ============================================================= -->\n' +
+    '<table width="100%" cellpadding="0" cellspacing="0" style="background:' + TT.canvas + ';font-family:' + TT.font + ';">\n' +
+    '  ' + renderHeader(s) + '\n' +
+    '  <tr><td align="center" style="padding:' + (s.showHeader ? '0' : '28px') + ' 20px 48px;">\n' +
+    '    <table width="100%" cellpadding="0" cellspacing="0" style="max-width:' + TT.width + 'px;background:' + TT.card + ';border-radius:14px;padding:30px 34px;font-family:' + TT.font + ';">\n' +
+    '      ' + renderTag(s) + '\n      ' + rows + '\n' +
+    '    </table>\n' +
+    '  </td></tr>\n' +
+    '</table>';
+}
+
+/* Full standalone document — used for the preview pane and .html export */
+function buildFull(tpl) {
+  return '<!DOCTYPE html><html><head><meta charset="utf-8">' +
+    '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+    '<title>' + esc(tpl.name || 'TWNTY-TWO') + '</title></head>' +
+    '<body style="margin:0;padding:0;background:' + TT.canvas + ';">' +
+    buildBody(tpl) + '</body></html>';
+}
+
+</script>
+<script>
+/* =========================================================================
+   TWNTY-TWO® Email Creator — App
+   ========================================================================= */
+
+/* ---------------- storage adapter ----------------
+   Runs on localStorage today. Paste a Supabase URL + anon key in Settings
+   and every call switches to the REST API with zero other changes.
+--------------------------------------------------- */
+const CFG_KEY = 'tt_ec_supabase';
+const LOCAL_KEY = 'tt_ec_templates';
+const TABLE = 'tt_email_templates';
+
+const Store = {
+  cfg() { try { return JSON.parse(localStorage.getItem(CFG_KEY) || 'null'); } catch (e) { return null; } },
+  setCfg(c) { c ? localStorage.setItem(CFG_KEY, JSON.stringify(c)) : localStorage.removeItem(CFG_KEY); },
+  get mode() { const c = this.cfg(); return (c && c.url && c.key) ? 'supabase' : 'local'; },
+
+  _headers() {
+    const c = this.cfg();
+    return { apikey: c.key, Authorization: 'Bearer ' + c.key, 'Content-Type': 'application/json', Prefer: 'return=representation' };
+  },
+  _local() { try { return JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]'); } catch (e) { return []; } },
+  _saveLocal(a) { localStorage.setItem(LOCAL_KEY, JSON.stringify(a)); },
+
+  async list() {
+    if (this.mode === 'local') return this._local().sort((a, b) => (b.updated_at || '').localeCompare(a.updated_at || ''));
+    const c = this.cfg();
+    const r = await fetch(c.url + '/rest/v1/' + TABLE + '?select=*&order=updated_at.desc', { headers: this._headers() });
+    if (!r.ok) throw new Error('Supabase list failed (' + r.status + '): ' + await r.text());
+    return r.json();
+  },
+
+  async save(tpl) {
+    tpl.updated_at = new Date().toISOString();
+    if (this.mode === 'local') {
+      const all = this._local();
+      const i = all.findIndex(t => t.id === tpl.id);
+      if (i >= 0) all[i] = tpl; else all.push(tpl);
+      this._saveLocal(all);
+      return tpl;
+    }
+    const c = this.cfg();
+    const r = await fetch(c.url + '/rest/v1/' + TABLE + '?on_conflict=id', {
+      method: 'POST',
+      headers: Object.assign({}, this._headers(), { Prefer: 'resolution=merge-duplicates,return=representation' }),
+      body: JSON.stringify([tpl])
+    });
+    if (!r.ok) throw new Error('Supabase save failed (' + r.status + '): ' + await r.text());
+    return (await r.json())[0];
+  },
+
+  async remove(id) {
+    if (this.mode === 'local') { this._saveLocal(this._local().filter(t => t.id !== id)); return; }
+    const c = this.cfg();
+    const r = await fetch(c.url + '/rest/v1/' + TABLE + '?id=eq.' + encodeURIComponent(id), { method: 'DELETE', headers: this._headers() });
+    if (!r.ok) throw new Error('Supabase delete failed (' + r.status + ')');
+  }
+};
+
+/* ---------------- starter templates ---------------- */
+const uid = () => 'tpl_' + Math.random().toString(36).slice(2, 10);
+const bid = () => 'b_' + Math.random().toString(36).slice(2, 9);
+
+function mkBlock(type, overrides) {
+  const def = BLOCK_BY_ID[type];
+  const values = {};
+  (def.fields || []).forEach(f => {
+    values[f.key] = (f.type === 'list') ? JSON.parse(JSON.stringify(f.def || [])) : f.def;
+  });
+  Object.assign(values, overrides || {});
+  return { id: bid(), type: type, values: values };
+}
+
+const SHIP_BAR = 'ORDERS OVER $100 — FREE SHIPPING 🇺🇸';
+
+function starterDrop() {
+  return {
+    id: uid(), name: 'Drop Announcement', kind: 'drop',
+    settings: { showHeader: false, eyebrow: 'NEW DROP', logoUrl: 'https://twnty-two.com',
+      subject: 'NEGRO LEAGUE COLLECTION NOW AVAILABLE', preheader: SHIP_BAR },
+    blocks: [
+      mkBlock('shipbar', { text: SHIP_BAR, href: '' }),
+      mkBlock('image', { src: '', alt: 'Collection flat-lay', href: 'https://twnty-two.com/collections/new', caption: '' }),
+      mkBlock('lockup', {}),
+      mkBlock('button', { text: 'Shop Now', url: 'https://twnty-two.com/collections/new', style: 'Solid (white)' }),
+      mkBlock('dropdetails', {}),
+      mkBlock('productGrid', { label: 'In This Drop' }),
+      mkBlock('footer', {})
+    ]
+  };
+}
+
+function starterSale() {
+  return {
+    id: uid(), name: 'Sale / Promo', kind: 'sale',
+    settings: { showHeader: false, eyebrow: 'LIMITED TIME', logoUrl: 'https://twnty-two.com',
+      subject: '20% OFF SITEWIDE — THIS WEEKEND ONLY', preheader: SHIP_BAR },
+    blocks: [
+      mkBlock('shipbar', { text: SHIP_BAR, href: '' }),
+      mkBlock('headline', { eyebrow: '', title: '20% off. This weekend only.', body: 'Sitewide, no minimum. Ends Sunday at 11:59PM EST.' }),
+      mkBlock('code', {}),
+      mkBlock('productRow', { label: 'Moving Fast' }),
+      mkBlock('notice', { strong: 'Heads up:', body: 'Sale items are final sale. Pre-orders are excluded from this promotion.' }),
+      mkBlock('policy', { title: 'Return Policy', body: 'All sales are final. If you received a defective item, the wrong item or the wrong quantity, contact us immediately and we will make it right.', linkText: 'View Return Policy', linkUrl: 'https://twnty-two.com/pages/return-policy' }),
+      mkBlock('footer', {})
+    ]
+  };
+}
+
+/* ---------------- app state ---------------- */
+let tpl = null;
+let selected = null;
+let saved = [];
+
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => Array.from(document.querySelectorAll(s));
+
+function toast(msg, bad) {
+  const t = $('#toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (bad ? ' bad' : '');
+  clearTimeout(t._t); t._t = setTimeout(() => { t.className = 'toast'; }, 2600);
+}
+
+/* ---------------- palette ---------------- */
+function renderPalette() {
+  const groups = {};
+  BLOCKS.forEach(b => { (groups[b.group] = groups[b.group] || []).push(b); });
+  $('#palette').innerHTML = Object.keys(groups).map(g =>
+    '<div class="pgroup"><div class="plabel">' + g + '</div>' +
+    groups[g].map(b => '<button class="pitem" data-add="' + b.id + '" title="' + b.hint.replace(/"/g, '&quot;') + '">' +
+      '<span>' + b.name + '</span><span class="plus">+</span></button>').join('') +
+    '</div>').join('');
+}
+
+/* ---------------- canvas (block list) ---------------- */
+function renderCanvas() {
+  const list = $('#blocklist');
+  if (!tpl.blocks.length) {
+    list.innerHTML = '<div class="empty">No blocks yet.<br>Add one from the left.</div>';
+    return;
+  }
+  list.innerHTML = tpl.blocks.map((b, i) => {
+    const def = BLOCK_BY_ID[b.type] || { name: b.type };
+    const isSel = b.id === selected;
+    return '<div class="bcard' + (isSel ? ' sel' : '') + '" data-sel="' + b.id + '">' +
+      '<div class="brow"><span class="bname">' + def.name + '</span>' +
+      '<span class="bacts">' +
+        '<button data-mv="up" data-id="' + b.id + '" ' + (i === 0 ? 'disabled' : '') + ' title="Move up">&#9650;</button>' +
+        '<button data-mv="dn" data-id="' + b.id + '" ' + (i === tpl.blocks.length - 1 ? 'disabled' : '') + ' title="Move down">&#9660;</button>' +
+        '<button data-dup="' + b.id + '" title="Duplicate">&#10697;</button>' +
+        '<button data-del="' + b.id + '" class="dan" title="Delete">&times;</button>' +
+      '</span></div>' +
+      (isSel ? '<div class="bedit">' + renderFields(b) + '</div>' : '') +
+      '</div>';
+  }).join('');
+}
+
+function renderFields(b) {
+  const def = BLOCK_BY_ID[b.type];
+  if (!def || !def.fields.length) return '<div class="nofields">No settings.</div>';
+  return def.fields.filter(f => !f.showIf || b.values[f.showIf.key] === f.showIf.is).map(f => {
+    const v = b.values[f.key];
+    const nm = 'data-bid="' + b.id + '" data-key="' + f.key + '"';
+    if (f.type === 'textarea') return fw(f, '<textarea ' + nm + ' rows="3">' + escHtml(v) + '</textarea>');
+    if (f.type === 'number') return fw(f, '<input type="number" ' + nm + ' value="' + escHtml(v) + '">');
+    if (f.type === 'select') return fw(f, '<select ' + nm + '>' + f.options.map(o => '<option' + (o === v ? ' selected' : '') + '>' + o + '</option>').join('') + '</select>');
+    if (f.type === 'list') return renderList(b, f, v || []);
+    return fw(f, '<input type="text" ' + nm + ' value="' + escHtml(v) + '"' + (f.type === 'url' ? ' placeholder="https://"' : '') + '>');
+  }).join('');
+}
+
+function fw(f, input) { return '<label class="fld"><span>' + f.label + '</span>' + input + '</label>'; }
+function escHtml(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+function renderList(b, f, arr) {
+  const items = arr.map((it, i) =>
+    '<div class="litem"><div class="lhead"><span>' + f.label.replace(/s$/, '') + ' ' + (i + 1) + '</span>' +
+    '<span class="bacts"><button data-lmv="up" data-bid="' + b.id + '" data-key="' + f.key + '" data-i="' + i + '" ' + (i === 0 ? 'disabled' : '') + '>&#9650;</button>' +
+    '<button data-lmv="dn" data-bid="' + b.id + '" data-key="' + f.key + '" data-i="' + i + '" ' + (i === arr.length - 1 ? 'disabled' : '') + '>&#9660;</button>' +
+    '<button class="dan" data-lrm data-bid="' + b.id + '" data-key="' + f.key + '" data-i="' + i + '">&times;</button></span></div>' +
+    f.sub.map(sf => '<label class="fld"><span>' + sf.label + '</span><input type="text" data-bid="' + b.id + '" data-key="' + f.key + '" data-i="' + i + '" data-sub="' + sf.key + '" value="' + escHtml(it[sf.key]) + '"></label>').join('') +
+    '</div>').join('');
+  return '<div class="lwrap"><div class="llabel">' + f.label + '</div>' + items +
+    '<button class="ladd" data-ladd data-bid="' + b.id + '" data-key="' + f.key + '">+ Add ' + f.label.replace(/s$/, '') + '</button></div>';
+}
+
+/* ---------------- preview ---------------- */
+let previewTimer = null;
+function renderPreview() {
+  clearTimeout(previewTimer);
+  previewTimer = setTimeout(() => {
+    $('#frame').srcdoc = buildFull(tpl);
+    const body = buildBody(tpl);
+    $('#codeout').textContent = body;
+    $('#sizehint').textContent = (new Blob([body]).size / 1024).toFixed(1) + ' KB';
+  }, 120);
+}
+
+/* ---------------- meta bar ---------------- */
+function renderMeta() {
+  $('#tplname').value = tpl.name || '';
+  $('#eyebrow').value = (tpl.settings && tpl.settings.eyebrow) || '';
+  $('#subject').value = (tpl.settings && tpl.settings.subject) || '';
+  $('#preheader').value = (tpl.settings && tpl.settings.preheader) || '';
+  $('#showheader').checked = tpl.settings.showHeader !== false;
+}
+
+function renderAll() { renderMeta(); renderCanvas(); renderPreview(); }
+
+/* ---------------- saved list ---------------- */
+async function refreshSaved() {
+  try {
+    saved = await Store.list();
+  } catch (e) { saved = []; toast(e.message, true); }
+  $('#savedlist').innerHTML = saved.length
+    ? saved.map(t => '<div class="sitem' + (t.id === tpl.id ? ' cur' : '') + '"><button class="sopen" data-open="' + t.id + '">' +
+        '<span class="sname">' + escHtml(t.name) + '</span><span class="smeta">' + (t.kind || 'custom') + ' · ' + ((t.updated_at || '').slice(0, 10)) + '</span></button>' +
+        '<button class="dan srm" data-rm="' + t.id + '">&times;</button></div>').join('')
+    : '<div class="empty sm">Nothing saved yet.</div>';
+  $('#modebadge').textContent = Store.mode === 'supabase' ? 'SUPABASE' : 'LOCAL';
+  $('#modebadge').className = 'badge ' + (Store.mode === 'supabase' ? 'ok' : '');
+}
+
+/* ---------------- events ---------------- */
+document.addEventListener('click', async (e) => {
+  const t = e.target.closest('button');
+  if (!t) {
+    const card = e.target.closest('[data-sel]');
+    if (card && !e.target.closest('.bedit')) { selected = card.dataset.sel === selected ? null : card.dataset.sel; renderCanvas(); }
+    return;
+  }
+
+  if (t.dataset.add) {
+    /* The shipping bar is a top-of-email strip — one only, always first. */
+    if (t.dataset.add === 'shipbar') {
+      if (tpl.blocks.some(x => x.type === 'shipbar')) { toast('Announcement Bar is already at the top', true); return; }
+      const b = mkBlock('shipbar');
+      tpl.blocks.unshift(b); selected = b.id; renderAll();
+      return;
+    }
+    const b = mkBlock(t.dataset.add);
+    let at = selected ? tpl.blocks.findIndex(x => x.id === selected) + 1 : tpl.blocks.length;
+    if (tpl.blocks[0] && tpl.blocks[0].type === 'shipbar') at = Math.max(at, 1);
+    tpl.blocks.splice(at, 0, b);
+    selected = b.id; renderAll();
+    return;
+  }
+  if (t.dataset.mv) {
+    const i = tpl.blocks.findIndex(x => x.id === t.dataset.id);
+    const j = t.dataset.mv === 'up' ? i - 1 : i + 1;
+    if (j < 0 || j >= tpl.blocks.length) return;
+    if (tpl.blocks[i].type === 'shipbar' || tpl.blocks[j].type === 'shipbar') {
+      toast('Announcement Bar stays at the top', true); return;
+    }
+    const [x] = tpl.blocks.splice(i, 1); tpl.blocks.splice(j, 0, x);
+    renderCanvas(); renderPreview(); return;
+  }
+  if (t.dataset.dup) {
+    const i = tpl.blocks.findIndex(x => x.id === t.dataset.dup);
+    const c = JSON.parse(JSON.stringify(tpl.blocks[i])); c.id = bid();
+    tpl.blocks.splice(i + 1, 0, c); selected = c.id; renderAll(); return;
+  }
+  if (t.dataset.del) {
+    tpl.blocks = tpl.blocks.filter(x => x.id !== t.dataset.del);
+    if (selected === t.dataset.del) selected = null;
+    renderAll(); return;
+  }
+  if (t.hasAttribute('data-ladd')) {
+    const b = tpl.blocks.find(x => x.id === t.dataset.bid);
+    const f = BLOCK_BY_ID[b.type].fields.find(x => x.key === t.dataset.key);
+    const blank = {}; f.sub.forEach(sf => blank[sf.key] = sf.def || '');
+    (b.values[t.dataset.key] = b.values[t.dataset.key] || []).push(blank);
+    renderCanvas(); renderPreview(); return;
+  }
+  if (t.hasAttribute('data-lrm')) {
+    const b = tpl.blocks.find(x => x.id === t.dataset.bid);
+    b.values[t.dataset.key].splice(+t.dataset.i, 1);
+    renderCanvas(); renderPreview(); return;
+  }
+  if (t.dataset.lmv) {
+    const b = tpl.blocks.find(x => x.id === t.dataset.bid);
+    const arr = b.values[t.dataset.key]; const i = +t.dataset.i;
+    const j = t.dataset.lmv === 'up' ? i - 1 : i + 1;
+    if (j < 0 || j >= arr.length) return;
+    const [x] = arr.splice(i, 1); arr.splice(j, 0, x);
+    renderCanvas(); renderPreview(); return;
+  }
+  if (t.dataset.open) {
+    const found = saved.find(x => x.id === t.dataset.open);
+    if (found) { tpl = JSON.parse(JSON.stringify(found)); selected = null; renderAll(); refreshSaved(); toast('Loaded “' + tpl.name + '”'); }
+    return;
+  }
+  if (t.dataset.rm) {
+    if (!confirm('Delete this saved template?')) return;
+    await Store.remove(t.dataset.rm); refreshSaved(); toast('Deleted'); return;
+  }
+});
+
+document.addEventListener('input', (e) => {
+  const el = e.target;
+  if (el.dataset.bid) {
+    const b = tpl.blocks.find(x => x.id === el.dataset.bid);
+    if (!b) return;
+    if (el.dataset.sub != null) b.values[el.dataset.key][+el.dataset.i][el.dataset.sub] = el.value;
+    else b.values[el.dataset.key] = el.type === 'number' ? +el.value : el.value;
+    renderPreview();
+    return;
+  }
+  if (el.id === 'tplname') { tpl.name = el.value; return; }
+  if (el.id === 'eyebrow') { tpl.settings.eyebrow = el.value; renderPreview(); return; }
+  if (el.id === 'subject') { tpl.settings.subject = el.value; return; }
+  if (el.id === 'preheader') { tpl.settings.preheader = el.value; return; }
+});
+
+document.addEventListener('change', (e) => {
+  if (e.target.id === 'showheader') { tpl.settings.showHeader = e.target.checked; renderPreview(); }
+  if (e.target.dataset.bid && e.target.tagName === 'SELECT') {
+    const b = tpl.blocks.find(x => x.id === e.target.dataset.bid);
+    b.values[e.target.dataset.key] = e.target.value;
+    renderCanvas(); renderPreview();   // re-render: showIf fields may appear/disappear
+  }
+});
+
+/* toolbar */
+function bindToolbar() {
+  $('#new-drop').onclick = () => { tpl = starterDrop(); selected = null; renderAll(); refreshSaved(); };
+  $('#new-sale').onclick = () => { tpl = starterSale(); selected = null; renderAll(); refreshSaved(); };
+  $('#new-blank').onclick = () => {
+    tpl = { id: uid(), name: 'Untitled Email', kind: 'custom', settings: { showHeader: false, eyebrow: '', subject: '', preheader: SHIP_BAR }, blocks: [mkBlock('headline'), mkBlock('button'), mkBlock('footer')] };
+    selected = null; renderAll(); refreshSaved();
+  };
+
+  $('#save').onclick = async () => {
+    try { await Store.save(JSON.parse(JSON.stringify(tpl))); await refreshSaved(); toast('Saved to ' + Store.mode); }
+    catch (e) { toast(e.message, true); }
+  };
+
+  $('#copy').onclick = async () => {
+    const body = buildBody(tpl);
+    try { await navigator.clipboard.writeText(body); toast('Liquid copied — paste into Shopify Email'); }
+    catch (e) {
+      const ta = document.createElement('textarea'); ta.value = body; document.body.appendChild(ta);
+      ta.select(); document.execCommand('copy'); ta.remove(); toast('Liquid copied');
+    }
+  };
+
+  $('#dl').onclick = () => download((tpl.name || 'email').replace(/\W+/g, '-').toLowerCase() + '.liquid', buildBody(tpl));
+  $('#dlhtml').onclick = () => download((tpl.name || 'email').replace(/\W+/g, '-').toLowerCase() + '.html', buildFull(tpl));
+  $('#dljson').onclick = () => download((tpl.name || 'email').replace(/\W+/g, '-').toLowerCase() + '.json', JSON.stringify(tpl, null, 2));
+
+  $$('.vtab').forEach(b => b.onclick = () => {
+    $$('.vtab').forEach(x => x.classList.remove('on')); b.classList.add('on');
+    const v = b.dataset.view;
+    $('#previewwrap').style.display = v === 'code' ? 'none' : 'flex';
+    $('#codewrap').style.display = v === 'code' ? 'block' : 'none';
+    $('#frame').style.maxWidth = v === 'mobile' ? '390px' : '100%';
+  });
+
+  $('#howto').onclick = () => $('#howmodal').classList.add('on');
+  $('#how-close').onclick = () => $('#howmodal').classList.remove('on');
+
+  $('#settings').onclick = () => {
+    const c = Store.cfg() || { url: '', key: '' };
+    $('#sb-url').value = c.url || ''; $('#sb-key').value = c.key || '';
+    $('#modal').classList.add('on');
+  };
+  $('#modal-close').onclick = () => $('#modal').classList.remove('on');
+  $('#sb-save').onclick = () => {
+    const url = $('#sb-url').value.trim().replace(/\/$/, ''), key = $('#sb-key').value.trim();
+    Store.setCfg(url && key ? { url, key } : null);
+    $('#modal').classList.remove('on'); refreshSaved();
+    toast(url && key ? 'Connected to Supabase' : 'Using local storage');
+  };
+  $('#sb-clear').onclick = () => { $('#sb-url').value = ''; $('#sb-key').value = ''; };
+}
+
+function download(name, text) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain' }));
+  a.download = name; a.click(); URL.revokeObjectURL(a.href);
+  toast('Downloaded ' + name);
+}
+
+/* ---------------- boot ---------------- */
+renderPalette();
+bindToolbar();
+tpl = starterDrop();
+renderAll();
+refreshSaved();
+
+</script>
+</body>
+</html>
