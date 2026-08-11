@@ -64,13 +64,24 @@
   .fld input,.fld textarea,.fld select{width:100%;padding:8px 10px;background:#0a0a0b;border:1px solid var(--hair);border-radius:7px;color:#fff;font-size:12.5px;line-height:1.5}
   .fld input:focus,.fld textarea:focus,.fld select:focus{outline:0;border-color:var(--rule);background:#0e0e10}
   .fld textarea{resize:vertical;min-height:64px}
+  .fld.rng>span{display:flex;justify-content:space-between;align-items:baseline}
+  .fld.rng .rv{color:#fff;font-size:11px;font-weight:700;letter-spacing:0}
+  .fld.rng input[type=range]{width:100%;padding:0;background:transparent;border:0;accent-color:#fff;height:18px;cursor:pointer}
+  .fld.rng .rhelp{display:block;font-style:normal;font-size:10px;color:var(--faint);line-height:1.5;margin-top:4px}
   .chk{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--body)}
   .chk input{accent-color:#fff;width:14px;height:14px}
 
   /* ---- block cards ---- */
   .bcard{background:var(--card);border:1px solid var(--hair);border-radius:9px;margin-bottom:6px;overflow:hidden}
   .bcard.sel{border-color:var(--rule)}
-  .brow{display:flex;align-items:center;justify-content:space-between;padding:9px 11px;cursor:pointer}
+  .brow{display:flex;align-items:center;gap:8px;padding:9px 11px;cursor:pointer}
+  .bname{flex:1}
+  .grip{color:var(--faint);font-size:11px;letter-spacing:-2px;cursor:grab;user-select:none;padding:2px 2px 2px 0;line-height:1}
+  .grip:active{cursor:grabbing}
+  .grip.lock{cursor:default;font-size:7px;opacity:.5}
+  .bcard.dragging{opacity:.35}
+  .bcard.dropabove{box-shadow:inset 0 3px 0 0 #fff}
+  .bcard.dropbelow{box-shadow:inset 0 -3px 0 0 #fff}
   .bcard.sel .brow{background:var(--well)}
   .bname{font-size:12px;font-weight:600;color:#fff}
   .bacts{display:flex;gap:3px}
@@ -158,6 +169,7 @@
       <label class="fld"><span>Preheader</span><input id="preheader" type="text" placeholder="Preview text after the subject"></label>
       <label class="fld"><span>Campaign tag (first line)</span><input id="eyebrow" type="text" placeholder="NEW DROP"></label>
       <label class="chk"><input id="showheader" type="checkbox"> Add TWNTY-TWO logo header <span style="color:var(--faint)">— off: Shopify already renders one</span></label>
+      <label class="chk"><input id="aligncenter" type="checkbox" checked> Centre all text</label>
     </div>
     <div class="sect">Blocks in this email</div>
     <div id="blocklist"></div>
@@ -208,6 +220,7 @@
     </ol>
     <p style="margin-top:14px">Shopify always appends its own footer (social icons, Bronx address, unsubscribe, copyright) below your content. That is required and can't be removed, so the Footer Grid block is optional — use it when you want the Customer Service / Subscribe buttons, skip it to keep the email short.</p>
     <p>Prefer Shopify's native <strong>Countdown</strong> section over the Launch Date block if you want a live timer — add it as a separate section above your Custom Liquid.</p>
+    <p><strong>Product images look like different sizes?</strong> Each product has a <strong>Size</strong> slider — but it only <em>shrinks</em>. Email clients don't support the CSS needed to zoom in, so shrink the item shot too close until it matches the one beside it, rather than trying to enlarge the far one. For a real tighter crop, append <code>&amp;width=800&amp;height=800&amp;crop=center</code> to a Shopify CDN image URL.</p>
     <div class="mact"><div class="spacer"></div><button class="btn pri" id="how-close">Got it</button></div>
   </div>
 </div>
@@ -248,8 +261,9 @@ const TT = {
 /* ---------- helpers ---------- */
 const nl2br = (s) => String(s == null ? '' : s).replace(/\r\n|\r|\n/g, '<br>');
 const esc = (s) => String(s == null ? '' : s);
-const row = (inner, pad) =>
-  '<tr><td style="' + (pad || 'padding-top:24px;') + '">' + inner + '</td></tr>';
+const row = (inner, pad, align) =>
+  '<tr><td' + (align ? ' align="' + align + '"' : '') +
+  ' style="' + (pad || 'padding-top:24px;') + '">' + inner + '</td></tr>';
 
 /* Shared atoms — identical markup to the transactional templates */
 const A = {
@@ -307,17 +321,16 @@ const BLOCKS = [
     { key: 'brand', label: 'Brand line', type: 'text', def: 'TWNTY-TWO®' },
     { key: 'collection', label: 'Collection name', type: 'textarea', def: 'NEGRO LEAGUE COLLECTION' },
     { key: 'status', label: 'Status line', type: 'text', def: 'AVAILABLE NOW!' },
-    { key: 'channel', label: 'Channel line (red)', type: 'text', def: 'ONLINE ONLY' }
+    { key: 'channel', label: 'Channel line (red)', type: 'text', def: 'ONLINE ONLY' },
+    { key: 'showXX', label: 'XX badge underneath', type: 'select', options: ['Hide', 'Show'], def: 'Hide' }
   ],
   render: (v) =>
-    row('<table width="100%" cellpadding="0" cellspacing="0"><tr><td style="vertical-align:top;">' +
-      (v.brand ? '<div style="font-size:15px;color:' + TT.white + ';font-weight:800;letter-spacing:.5px;line-height:1.3;">' + esc(v.brand) + '</div>' : '') +
+    row((v.brand ? '<div style="font-size:15px;color:' + TT.white + ';font-weight:800;letter-spacing:.5px;line-height:1.3;">' + esc(v.brand) + '</div>' : '') +
       (v.collection ? '<div style="font-size:19px;color:' + TT.white + ';font-weight:800;letter-spacing:.5px;line-height:1.25;margin-top:2px;">' + nl2br(v.collection) + '</div>' : '') +
       (v.status ? '<div style="font-size:19px;color:' + TT.white + ';font-weight:800;letter-spacing:.5px;line-height:1.25;">' + esc(v.status) + '</div>' : '') +
       (v.channel ? '<div style="font-size:12px;color:#ef4444;font-weight:800;letter-spacing:1px;margin-top:6px;">' + esc(v.channel) + '</div>' : '') +
-      '</td><td width="34" style="vertical-align:top;text-align:right;padding-left:10px;">' +
-      '<img src="' + TT.xx + '" width="30" height="30" alt="XX" style="display:block;border:0;border-radius:5px;">' +
-      '</td></tr></table>', 'padding-top:18px;')
+      (v.showXX === 'Show' ? '<img src="' + TT.xx + '" width="30" height="30" alt="XX" style="display:block;border:0;border-radius:5px;margin:12px auto 0;">' : ''),
+      'padding-top:18px;', 'center')
 },
 {
   id: 'headline',
@@ -418,9 +431,9 @@ const BLOCKS = [
   fields: [
     { key: 'label', label: 'Section label', type: 'text', def: 'Drop Details' },
 
-    { key: 'status', label: 'Release status', type: 'select', options: ['Unreleased', 'Released'], def: 'Unreleased' },
-    { key: 'releaseDate', label: 'Release date & time', type: 'text', def: 'Friday, August 15, 2026 at 2:22PM Eastern', showIf: { key: 'status', is: 'Unreleased' } },
-    { key: 'releasedText', label: 'When it went live', type: 'text', def: 'Today, 12:00PM Eastern', showIf: { key: 'status', is: 'Released' } },
+    { key: 'status', label: 'Releases row', type: 'select', options: ['Scheduled', 'Out now', 'Hide this row'], def: 'Scheduled' },
+    { key: 'releaseDate', label: 'Release date & time', type: 'text', def: 'Friday, August 15, 2026 at 2:22PM Eastern', showIf: { key: 'status', is: 'Scheduled' } },
+    { key: 'releasedText', label: 'Text when it is out', type: 'text', def: 'Now Available', showIf: { key: 'status', is: 'Out now' } },
 
     { key: 'availability', label: 'Availability', type: 'select', options: ['Online Only', 'Online & In-Store', 'Pop-Up Event'], def: 'Online Only' },
     { key: 'eventDetail', label: 'Pop-up detail (venue, date)', type: 'text', def: '', showIf: { key: 'availability', is: 'Pop-Up Event' } },
@@ -431,31 +444,34 @@ const BLOCKS = [
   ],
   render: (v) => {
     const pre = v.fulfillment === 'Pre-Order';
-    const line = (k, val, first) =>
-      '<tr><td style="' + (first ? '' : 'padding-top:8px;') + 'font-size:12px;color:' + TT.muted + ';">' + k + '</td>' +
-      '<td style="' + (first ? '' : 'padding-top:8px;') + 'font-size:13px;color:' + TT.text + ';text-align:right;">' + val + '</td></tr>';
+    let first = true;
+    /* stacked + centred: label above value. A label/value column pair cannot centre. */
+    const pair = (k, val) => {
+      const h = '<div style="font-size:12px;color:' + TT.muted + ';margin-top:' + (first ? '0' : '12px') + ';">' + k + '</div>' +
+                '<div style="font-size:13px;color:' + TT.text + ';margin-top:2px;">' + val + '</div>';
+      first = false;
+      return h;
+    };
 
     let r = '';
 
-    /* release status */
-    if (v.status === 'Released') r += line('Released', esc(v.releasedText), true);
-    else r += line('Releases', esc(v.releaseDate), true);
+    /* Always "Releases" — the value carries the tense (a future date, or "Now Available") */
+    if (v.status === 'Out now') r += pair('Releases', esc(v.releasedText));
+    else if (v.status === 'Scheduled') r += pair('Releases', esc(v.releaseDate));
 
-    /* availability */
-    r += line('Availability', esc(v.availability));
+    r += pair('Availability', esc(v.availability));
     if (v.availability === 'Pop-Up Event' && v.eventDetail)
-      r += '<tr><td colspan="2" style="padding-top:3px;font-size:11px;color:' + TT.faint + ';text-align:right;line-height:1.6;">' + esc(v.eventDetail) + '</td></tr>';
+      r += '<div style="font-size:11px;color:' + TT.faint + ';line-height:1.6;margin-top:3px;">' + esc(v.eventDetail) + '</div>';
 
-    /* fulfilment */
-    r += line('Ships', pre
+    r += pair('Ships', pre
       ? '<a href="' + esc(v.preorderUrl) + '" style="color:' + TT.link + ';text-decoration:underline;">See Pre-Order Policy</a>'
       : esc(v.shipText));
 
-    /* fine print — pre-order only */
-    if (pre) r += '<tr><td colspan="2" style="padding-top:8px;font-size:11px;color:' + TT.faint + ';line-height:1.6;">' +
-      '<strong style="color:#999;">Please note:</strong> Pre-order items ship on the timeline listed in our Shipping Policy.</td></tr>';
+    if (pre) r += '<div style="font-size:11px;color:' + TT.faint + ';line-height:1.6;margin-top:14px;">' +
+      '<strong style="color:#999;">Please note:</strong> Pre-order items ship on the timeline listed in our Shipping Policy.</div>';
 
-    return row(A.eyebrow(v.label) + '<table width="100%" cellpadding="0" cellspacing="0">' + r + '</table>', 'padding:18px 0 4px;');
+    return row('<div style="font-size:11px;color:' + TT.muted + ';font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">' +
+      esc(v.label) + '</div>' + r, 'padding:18px 0 4px;', 'center');
   }
 },
 {
@@ -483,15 +499,18 @@ const BLOCKS = [
   hint: 'Full-width hero or lifestyle shot. Host on a CDN — no local files.',
   fields: [
     { key: 'src', label: 'Image URL', type: 'url', def: 'https://help.twnty-two.nyc/logo.png' },
+    { key: 'scale', label: 'Size', type: 'range', min: 40, max: 100, step: 1, unit: '%', def: 100,
+      help: 'Shrinks only — email can’t zoom in. To make the subject bigger, re-crop the source image.' },
     { key: 'alt', label: 'Alt text', type: 'text', def: 'TWNTY-TWO' },
     { key: 'href', label: 'Links to (optional)', type: 'url', def: 'https://twnty-two.com' },
     { key: 'caption', label: 'Caption (optional)', type: 'text', def: '' }
   ],
   render: (v) => {
-    let img = '<img src="' + esc(v.src) + '" width="452" alt="' + esc(v.alt) + '" style="display:block;border:0;border-radius:10px;width:100%;max-width:452px;height:auto;background:#000;">';
+    const w = Math.round(452 * Math.max(20, Math.min(100, Number(v.scale) || 100)) / 100);
+    let img = '<img src="' + esc(v.src) + '" width="' + w + '" alt="' + esc(v.alt) + '" style="display:block;border:0;border-radius:10px;width:100%;max-width:' + w + 'px;height:auto;margin:0 auto;background:#000;">';
     if (v.href) img = '<a href="' + esc(v.href) + '" style="text-decoration:none;">' + img + '</a>';
-    if (v.caption) img += '<div style="font-size:11px;color:' + TT.faint + ';line-height:1.6;margin-top:8px;">' + esc(v.caption) + '</div>';
-    return row(img, 'padding-top:20px;');
+    if (v.caption) img += '<div style="font-size:11px;color:' + TT.faint + ';line-height:1.6;margin-top:8px;text-align:center;">' + esc(v.caption) + '</div>';
+    return row(img, 'padding-top:20px;', 'center');
   }
 },
 {
@@ -507,9 +526,9 @@ const BLOCKS = [
   ],
   render: (v) => {
     const cell = (src, href, side) => {
-      let img = '<img src="' + esc(src) + '" width="218" alt="" style="display:block;border:0;border-radius:10px;width:100%;max-width:218px;height:auto;background:#000;">';
+      let img = '<img src="' + esc(src) + '" width="218" alt="" style="display:block;border:0;border-radius:10px;width:100%;max-width:218px;height:auto;margin:0 auto;background:#000;">';
       if (href) img = '<a href="' + esc(href) + '" style="text-decoration:none;">' + img + '</a>';
-      return '<td width="50%" style="padding:' + (side === 'l' ? '0 4px 0 0' : '0 0 0 4px') + ';vertical-align:top;">' + img + '</td>';
+      return '<td width="50%" align="center" style="padding:' + (side === 'l' ? '0 4px 0 0' : '0 0 0 4px') + ';vertical-align:top;">' + img + '</td>';
     };
     return row('<table width="100%" cellpadding="0" cellspacing="0"><tr>' +
       cell(v.aSrc, v.aHref, 'l') + cell(v.bSrc, v.bHref, 'r') + '</tr></table>', 'padding-top:20px;');
@@ -524,26 +543,35 @@ const BLOCKS = [
     { key: 'label', label: 'Section label (optional)', type: 'text', def: 'In This Drop' },
     { key: 'items', label: 'Products', type: 'list', sub: [
         { key: 'img', label: 'Image URL', type: 'url', def: '' },
+        { key: 'scale', label: 'Size', type: 'range', min: 50, max: 100, step: 1, unit: '%', def: 100,
+          help: 'Shrinks only — email can’t zoom in. If a product looks too small, shrink the one next to it instead, or re-crop the source. Shopify CDN images can be cropped tighter by adding &amp;width=800&amp;height=800&amp;crop=center to the URL.' },
         { key: 'title', label: 'Name', type: 'text', def: 'Product name' },
         { key: 'price', label: 'Price', type: 'text', def: '$00' },
         { key: 'href', label: 'Links to', type: 'url', def: 'https://twnty-two.com' }
       ], def: [
-        { img: '', title: 'Product One', price: '$120', href: 'https://twnty-two.com' },
-        { img: '', title: 'Product Two', price: '$95', href: 'https://twnty-two.com' }
+        { img: '', scale: 100, title: 'Product One', price: '$120', href: 'https://twnty-two.com' },
+        { img: '', scale: 100, title: 'Product Two', price: '$95', href: 'https://twnty-two.com' }
       ]
     }
   ],
   render: (v) => {
     const items = v.items || [];
-    let out = '';
+    const BOX = 218;                       /* image area stays this tall whatever the scale, */
+    let out = '';                          /* so names and prices below stay on one line     */
     for (let i = 0; i < items.length; i += 2) {
       const cells = [items[i], items[i + 1]].map((it, j) => {
         if (!it) return '<td width="50%"></td>';
-        const img = '<img src="' + esc(it.img) + '" width="218" alt="' + esc(it.title) + '" style="display:block;border:0;border-radius:10px;width:100%;max-width:218px;height:auto;background:#000;">';
-        return '<td width="50%" style="padding:' + (j === 0 ? '0 4px 12px 0' : '0 0 12px 4px') + ';vertical-align:top;">' +
-          '<a href="' + esc(it.href) + '" style="text-decoration:none;">' + img + '</a>' +
-          '<div style="font-size:13px;color:' + TT.white + ';font-weight:600;margin-top:8px;line-height:1.4;">' + esc(it.title) + '</div>' +
-          '<div style="font-size:12px;color:' + TT.muted + ';margin-top:2px;">' + esc(it.price) + '</div></td>';
+        const pct = Math.max(20, Math.min(100, Number(it.scale) || 100));
+        const w = Math.round(BOX * pct / 100);
+        const img = '<img src="' + esc(it.img) + '" width="' + w + '" alt="' + esc(it.title) +
+          '" style="display:block;border:0;border-radius:10px;width:100%;max-width:' + w + 'px;height:auto;margin:0 auto;background:#000;">';
+        return '<td width="50%" align="center" style="padding:' + (j === 0 ? '0 4px 12px 0' : '0 0 12px 4px') + ';vertical-align:top;text-align:center;">' +
+          '<table width="100%" cellpadding="0" cellspacing="0"><tr>' +
+            '<td height="' + BOX + '" align="center" valign="middle" style="height:' + BOX + 'px;text-align:center;">' +
+              '<a href="' + esc(it.href) + '" style="text-decoration:none;">' + img + '</a>' +
+            '</td></tr></table>' +
+          '<div style="font-size:13px;color:' + TT.white + ';font-weight:600;margin-top:8px;line-height:1.4;text-align:center;">' + esc(it.title) + '</div>' +
+          '<div style="font-size:12px;color:' + TT.muted + ';margin-top:2px;text-align:center;">' + esc(it.price) + '</div></td>';
       }).join('');
       out += '<tr>' + cells + '</tr>';
     }
@@ -728,11 +756,19 @@ function buildBody(tpl) {
     '<!-- Paste into Shopify Email → Add section → Custom → Custom Liquid -->\n' +
     '<!-- Shopify renders the logo band above and the unsubscribe footer below. -->\n' +
     '<!-- ============================================================= -->\n' +
-    '<table width="100%" cellpadding="0" cellspacing="0" style="background:' + TT.canvas + ';font-family:' + TT.font + ';">\n' +
+    /* margin:0 auto is what actually centres the card. A table with width:100% +
+       max-width is a block box: <td align="center"> does NOT centre it, and Shopify
+       renders it flush left without this. Padding lives on a td, never on the
+       width:100% table itself. bgcolor/align attributes survive CSS sanitisers. */
+    '<table width="100%" cellpadding="0" cellspacing="0" bgcolor="#000000" align="center" style="width:100%;background:' + TT.canvas + ';font-family:' + TT.font + ';">\n' +
     '  ' + renderHeader(s) + '\n' +
     '  <tr><td align="center" style="padding:' + (s.showHeader ? '0' : '28px') + ' 20px 48px;">\n' +
-    '    <table width="100%" cellpadding="0" cellspacing="0" style="max-width:' + TT.width + 'px;background:' + TT.card + ';border-radius:14px;padding:30px 34px;font-family:' + TT.font + ';">\n' +
+    '    <table width="100%" cellpadding="0" cellspacing="0" align="center" bgcolor="#111111" style="width:100%;max-width:' + TT.width + 'px;margin:0 auto;background:' + TT.card + ';border-radius:14px;font-family:' + TT.font + ';">\n' +
+    '      <tr><td style="padding:30px 34px;' + (s.align === 'left' ? '' : 'text-align:center;') + '">\n' +
+    '        <table width="100%" cellpadding="0" cellspacing="0">\n' +
     '      ' + renderTag(s) + '\n      ' + rows + '\n' +
+    '        </table>\n' +
+    '      </td></tr>\n' +
     '    </table>\n' +
     '  </td></tr>\n' +
     '</table>';
@@ -827,14 +863,14 @@ const SHIP_BAR = 'ORDERS OVER $100 — FREE SHIPPING 🇺🇸';
 function starterDrop() {
   return {
     id: uid(), name: 'Drop Announcement', kind: 'drop',
-    settings: { showHeader: false, eyebrow: 'NEW DROP', logoUrl: 'https://twnty-two.com',
+    settings: { showHeader: false, eyebrow: 'NEW DROP', logoUrl: 'https://twnty-two.com', align: 'center',
       subject: 'NEGRO LEAGUE COLLECTION NOW AVAILABLE', preheader: SHIP_BAR },
     blocks: [
       mkBlock('shipbar', { text: SHIP_BAR, href: '' }),
-      mkBlock('image', { src: '', alt: 'Collection flat-lay', href: 'https://twnty-two.com/collections/new', caption: '' }),
       mkBlock('lockup', {}),
+      mkBlock('image', { src: '', alt: 'Collection flat-lay', href: 'https://twnty-two.com/collections/new', caption: '' }),
       mkBlock('button', { text: 'Shop Now', url: 'https://twnty-two.com/collections/new', style: 'Solid (white)' }),
-      mkBlock('dropdetails', {}),
+      mkBlock('dropdetails', { status: 'Hide this row' }),
       mkBlock('productGrid', { label: 'In This Drop' }),
       mkBlock('footer', {})
     ]
@@ -844,7 +880,7 @@ function starterDrop() {
 function starterSale() {
   return {
     id: uid(), name: 'Sale / Promo', kind: 'sale',
-    settings: { showHeader: false, eyebrow: 'LIMITED TIME', logoUrl: 'https://twnty-two.com',
+    settings: { showHeader: false, eyebrow: 'LIMITED TIME', logoUrl: 'https://twnty-two.com', align: 'center',
       subject: '20% OFF SITEWIDE — THIS WEEKEND ONLY', preheader: SHIP_BAR },
     blocks: [
       mkBlock('shipbar', { text: SHIP_BAR, href: '' }),
@@ -894,8 +930,13 @@ function renderCanvas() {
   list.innerHTML = tpl.blocks.map((b, i) => {
     const def = BLOCK_BY_ID[b.type] || { name: b.type };
     const isSel = b.id === selected;
-    return '<div class="bcard' + (isSel ? ' sel' : '') + '" data-sel="' + b.id + '">' +
-      '<div class="brow"><span class="bname">' + def.name + '</span>' +
+    const pinned = b.type === 'shipbar';
+    return '<div class="bcard' + (isSel ? ' sel' : '') + (pinned ? ' pin' : '') + '" data-sel="' + b.id + '">' +
+      '<div class="brow">' +
+      (pinned
+        ? '<span class="grip lock" title="Announcement Bar stays at the top">&#9679;</span>'
+        : '<span class="grip" draggable="true" data-grip="' + b.id + '" title="Drag to reorder">&#8942;&#8942;</span>') +
+      '<span class="bname">' + def.name + '</span>' +
       '<span class="bacts">' +
         '<button data-mv="up" data-id="' + b.id + '" ' + (i === 0 ? 'disabled' : '') + ' title="Move up">&#9650;</button>' +
         '<button data-mv="dn" data-id="' + b.id + '" ' + (i === tpl.blocks.length - 1 ? 'disabled' : '') + ' title="Move down">&#9660;</button>' +
@@ -916,9 +957,19 @@ function renderFields(b) {
     if (f.type === 'textarea') return fw(f, '<textarea ' + nm + ' rows="3">' + escHtml(v) + '</textarea>');
     if (f.type === 'number') return fw(f, '<input type="number" ' + nm + ' value="' + escHtml(v) + '">');
     if (f.type === 'select') return fw(f, '<select ' + nm + '>' + f.options.map(o => '<option' + (o === v ? ' selected' : '') + '>' + o + '</option>').join('') + '</select>');
+    if (f.type === 'range') return rangeField(f, v, nm);
     if (f.type === 'list') return renderList(b, f, v || []);
     return fw(f, '<input type="text" ' + nm + ' value="' + escHtml(v) + '"' + (f.type === 'url' ? ' placeholder="https://"' : '') + '>');
   }).join('');
+}
+
+/* slider + live readout + reset */
+function rangeField(f, v, nm) {
+  const val = (v == null || v === '') ? f.def : v;
+  return '<label class="fld rng"><span>' + f.label +
+    '<b class="rv">' + val + (f.unit || '') + '</b></span>' +
+    '<input type="range" ' + nm + ' min="' + f.min + '" max="' + f.max + '" step="' + (f.step || 1) + '" value="' + escHtml(val) + '">' +
+    (f.help ? '<em class="rhelp">' + f.help + '</em>' : '') + '</label>';
 }
 
 function fw(f, input) { return '<label class="fld"><span>' + f.label + '</span>' + input + '</label>'; }
@@ -930,7 +981,11 @@ function renderList(b, f, arr) {
     '<span class="bacts"><button data-lmv="up" data-bid="' + b.id + '" data-key="' + f.key + '" data-i="' + i + '" ' + (i === 0 ? 'disabled' : '') + '>&#9650;</button>' +
     '<button data-lmv="dn" data-bid="' + b.id + '" data-key="' + f.key + '" data-i="' + i + '" ' + (i === arr.length - 1 ? 'disabled' : '') + '>&#9660;</button>' +
     '<button class="dan" data-lrm data-bid="' + b.id + '" data-key="' + f.key + '" data-i="' + i + '">&times;</button></span></div>' +
-    f.sub.map(sf => '<label class="fld"><span>' + sf.label + '</span><input type="text" data-bid="' + b.id + '" data-key="' + f.key + '" data-i="' + i + '" data-sub="' + sf.key + '" value="' + escHtml(it[sf.key]) + '"></label>').join('') +
+    f.sub.map(sf => {
+      const snm = 'data-bid="' + b.id + '" data-key="' + f.key + '" data-i="' + i + '" data-sub="' + sf.key + '"';
+      if (sf.type === 'range') return rangeField(sf, it[sf.key], snm);
+      return '<label class="fld"><span>' + sf.label + '</span><input type="text" ' + snm + ' value="' + escHtml(it[sf.key]) + '"></label>';
+    }).join('') +
     '</div>').join('');
   return '<div class="lwrap"><div class="llabel">' + f.label + '</div>' + items +
     '<button class="ladd" data-ladd data-bid="' + b.id + '" data-key="' + f.key + '">+ Add ' + f.label.replace(/s$/, '') + '</button></div>';
@@ -954,7 +1009,8 @@ function renderMeta() {
   $('#eyebrow').value = (tpl.settings && tpl.settings.eyebrow) || '';
   $('#subject').value = (tpl.settings && tpl.settings.subject) || '';
   $('#preheader').value = (tpl.settings && tpl.settings.preheader) || '';
-  $('#showheader').checked = tpl.settings.showHeader !== false;
+  $('#showheader').checked = tpl.settings.showHeader === true;
+  $('#aligncenter').checked = (tpl.settings.align || 'center') === 'center';
 }
 
 function renderAll() { renderMeta(); renderCanvas(); renderPreview(); }
@@ -1053,19 +1109,28 @@ document.addEventListener('input', (e) => {
   if (el.dataset.bid) {
     const b = tpl.blocks.find(x => x.id === el.dataset.bid);
     if (!b) return;
-    if (el.dataset.sub != null) b.values[el.dataset.key][+el.dataset.i][el.dataset.sub] = el.value;
-    else b.values[el.dataset.key] = el.type === 'number' ? +el.value : el.value;
+    const num = el.type === 'number' || el.type === 'range';
+    const val = num ? +el.value : el.value;
+    if (el.dataset.sub != null) b.values[el.dataset.key][+el.dataset.i][el.dataset.sub] = val;
+    else b.values[el.dataset.key] = val;
+    /* live readout next to a slider, without re-rendering the panel (that would drop focus) */
+    if (el.type === 'range') {
+      const badge = el.parentElement.querySelector('.rv');
+      if (badge) badge.textContent = el.value + (badge.textContent.replace(/[\d.]/g, '') || '');
+    }
     renderPreview();
     return;
   }
   if (el.id === 'tplname') { tpl.name = el.value; return; }
   if (el.id === 'eyebrow') { tpl.settings.eyebrow = el.value; renderPreview(); return; }
+  if (el.id === 'aligncenter') { tpl.settings.align = el.checked ? 'center' : 'left'; renderPreview(); return; }
   if (el.id === 'subject') { tpl.settings.subject = el.value; return; }
   if (el.id === 'preheader') { tpl.settings.preheader = el.value; return; }
 });
 
 document.addEventListener('change', (e) => {
   if (e.target.id === 'showheader') { tpl.settings.showHeader = e.target.checked; renderPreview(); }
+  if (e.target.id === 'aligncenter') { tpl.settings.align = e.target.checked ? 'center' : 'left'; renderPreview(); }
   if (e.target.dataset.bid && e.target.tagName === 'SELECT') {
     const b = tpl.blocks.find(x => x.id === e.target.dataset.bid);
     b.values[e.target.dataset.key] = e.target.value;
@@ -1073,12 +1138,79 @@ document.addEventListener('change', (e) => {
   }
 });
 
+/* ---------------- drag to reorder ---------------- */
+let dragId = null;
+
+function clearDropMarks() {
+  $$('.bcard').forEach(c => c.classList.remove('dropabove', 'dropbelow', 'dragging'));
+}
+
+/* Where would a drop land, relative to the card under the cursor? */
+function dropSide(card, clientY) {
+  const r = card.getBoundingClientRect();
+  return clientY < r.top + r.height / 2 ? 'above' : 'below';
+}
+
+function bindDrag() {
+  const list = $('#blocklist');
+
+  list.addEventListener('dragstart', (e) => {
+    const grip = e.target.closest('[data-grip]');
+    if (!grip) { e.preventDefault(); return; }
+    dragId = grip.dataset.grip;
+    const card = grip.closest('.bcard');
+    card.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', dragId);   // Firefox needs a payload
+    if (e.dataTransfer.setDragImage) e.dataTransfer.setDragImage(card, 20, 18);
+  });
+
+  list.addEventListener('dragover', (e) => {
+    if (!dragId) return;
+    const card = e.target.closest('.bcard');
+    if (!card || card.dataset.sel === dragId) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    const side = dropSide(card, e.clientY);
+    // never allow a drop above the pinned announcement bar
+    const isPinned = card.classList.contains('pin');
+    $$('.bcard').forEach(c => c.classList.remove('dropabove', 'dropbelow'));
+    card.classList.add(isPinned ? 'dropbelow' : (side === 'above' ? 'dropabove' : 'dropbelow'));
+  });
+
+  list.addEventListener('drop', (e) => {
+    if (!dragId) return;
+    e.preventDefault();
+    const card = e.target.closest('.bcard');
+    if (!card || card.dataset.sel === dragId) { clearDropMarks(); dragId = null; return; }
+    const before = !card.classList.contains('pin') && dropSide(card, e.clientY) === 'above';
+    moveBlock(dragId, card.dataset.sel, before);
+    dragId = null;
+    renderCanvas(); renderPreview();
+  });
+
+  list.addEventListener('dragend', () => { clearDropMarks(); dragId = null; });
+  list.addEventListener('dragleave', (e) => {
+    if (!e.relatedTarget || !list.contains(e.relatedTarget)) clearDropMarks();
+  });
+}
+
+function moveBlock(srcId, targetId, before) {
+  const from = tpl.blocks.findIndex(b => b.id === srcId);
+  if (from < 0) return;
+  const [blk] = tpl.blocks.splice(from, 1);
+  let to = tpl.blocks.findIndex(b => b.id === targetId);
+  if (to < 0) to = tpl.blocks.length; else if (!before) to += 1;
+  if (tpl.blocks[0] && tpl.blocks[0].type === 'shipbar') to = Math.max(to, 1);
+  tpl.blocks.splice(to, 0, blk);
+}
+
 /* toolbar */
 function bindToolbar() {
   $('#new-drop').onclick = () => { tpl = starterDrop(); selected = null; renderAll(); refreshSaved(); };
   $('#new-sale').onclick = () => { tpl = starterSale(); selected = null; renderAll(); refreshSaved(); };
   $('#new-blank').onclick = () => {
-    tpl = { id: uid(), name: 'Untitled Email', kind: 'custom', settings: { showHeader: false, eyebrow: '', subject: '', preheader: SHIP_BAR }, blocks: [mkBlock('headline'), mkBlock('button'), mkBlock('footer')] };
+    tpl = { id: uid(), name: 'Untitled Email', kind: 'custom', settings: { showHeader: false, eyebrow: '', align: 'center', subject: '', preheader: SHIP_BAR }, blocks: [mkBlock('headline'), mkBlock('button'), mkBlock('footer')] };
     selected = null; renderAll(); refreshSaved();
   };
 
@@ -1136,6 +1268,7 @@ function download(name, text) {
 /* ---------------- boot ---------------- */
 renderPalette();
 bindToolbar();
+bindDrag();
 tpl = starterDrop();
 renderAll();
 refreshSaved();

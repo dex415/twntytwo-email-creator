@@ -1,30 +1,26 @@
 # TWNTY-TWO® Email Creator
 
-Builds marketing email bodies in the TWNTY-TWO transactional style, for pasting
-into **Shopify Messaging → Add section → Custom → Custom Liquid**.
+Marketing email bodies in the TWNTY-TWO transactional style, for pasting into
+**Shopify Messaging → Add section → Custom → Custom Liquid**. Shopify renders
+the logo band above and the unsubscribe footer below; this tool builds the middle.
 
-Shopify renders the logo band above and the social/address/unsubscribe footer
-below. This tool generates only the middle — campaign tag down to the 4-button
-footer.
+## Critical layout note
 
-## Use
+The card table carries `width:100%; max-width:520px; margin:0 auto`. The
+`margin:0 auto` is load-bearing — a width:100% table with a max-width is a block
+box, and `<td align="center">` does NOT centre it. Without it Shopify renders the
+card flush left. Card padding lives on a `<td>`, never on the width:100% table.
 
-Open the deployed URL. Pick a starter (Drop / Sale / Blank), edit blocks, hit
-**Copy Liquid**, paste into the Custom Liquid section.
+## Product image sizing
 
-In Shopify's **Email colors** panel set Content background and Border to
-`#000000`, or the campaign shell frames the dark card in white.
-
-## Develop
-
-Single self-contained file. No build step, no dependencies. Edit `index.html`
-directly, commit, push — Pages redeploys in about a minute.
+Each product in a Product Grid has a **Size** slider (50–100%). It only shrinks —
+email clients don't support the CSS needed to zoom in. Shrink the item shot too
+close until it matches its neighbour. The image area stays a fixed 218px tall at
+any scale so names and prices stay aligned. For a real tighter crop, append
+`&width=800&height=800&crop=center` to a Shopify CDN image URL.
 
 ## Saved templates
 
-Defaults to browser localStorage (per-browser, per-origin). To share templates
-across machines, run `supabase-schema.sql` on the TWNTY-TWO Supabase project and
-paste the project URL + anon key into Settings.
-
-Note: the anon key is stored in the visitor's own localStorage, never committed
-to this repo. If this repo is public, keep it that way — do not hardcode keys.
+Browser localStorage by default. Run `supabase-schema.sql` on the TWNTY-TWO
+Supabase project and paste the URL + anon key into Settings. Never hardcode keys
+into index.html — this repo is public.
