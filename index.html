@@ -68,6 +68,7 @@
   .fld.rng .rv{color:#fff;font-size:11px;font-weight:700;letter-spacing:0}
   .fld.rng input[type=range]{width:100%;padding:0;background:transparent;border:0;accent-color:#fff;height:18px;cursor:pointer}
   .fld.rng .rhelp{display:block;font-style:normal;font-size:10px;color:var(--faint);line-height:1.5;margin-top:4px}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .chk{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--body)}
   .chk input{accent-color:#fff;width:14px;height:14px}
 
@@ -189,7 +190,11 @@
         <label class="fld"><span>Preheader</span><span class="wc"><input id="preheader" type="text" placeholder="ORDERS OVER $100 — FREE SHIPPING"><button class="cpy" data-copy="preheader">Copy</button></span></label>
       </details>
 
-      <label class="fld"><span>Campaign tag (first line)</span><input id="eyebrow" type="text" placeholder="NEW DROP"></label>
+      <label class="fld"><span>Campaign tag</span><input id="eyebrow" type="text" placeholder="NEW DROP"></label>
+      <div class="two">
+        <label class="fld"><span>Tag alignment</span><select id="tagalign"><option>left</option><option selected>center</option><option>right</option></select></label>
+        <label class="fld"><span>Logo alignment</span><select id="logoalign"><option>left</option><option selected>center</option><option>right</option></select></label>
+      </div>
       <label class="chk"><input id="showtag" type="checkbox" checked> Show campaign tag</label>
       <label class="chk"><input id="showheader" type="checkbox"> Add TWNTY-TWO logo header <span style="color:var(--faint)">— off: Shopify already renders one</span></label>
       <label class="chk"><input id="aligncenter" type="checkbox" checked> Centre all text</label>
@@ -287,6 +292,26 @@ const esc = (s) => String(s == null ? '' : s);
 const row = (inner, pad, align) =>
   '<tr><td' + (align ? ' align="' + align + '"' : '') +
   ' style="' + (pad || 'padding-top:24px;') + '">' + inner + '</td></tr>';
+
+/* Normalise a Shopify CDN image to a fixed aspect ratio so every product cell
+   is the same shape. Shopify crops server-side, so there is no dead space and
+   nothing depends on CSS the email client might strip. Non-Shopify URLs pass
+   through untouched. */
+const SHAPES = {
+  'Original': null,
+  'Square': [1200, 1200],
+  'Portrait 4:5': [1200, 1500],
+  'Portrait 3:4': [1200, 1600],
+  'Landscape 4:3': [1600, 1200]
+};
+function cdnShape(url, shape) {
+  const dims = SHAPES[shape];
+  if (!dims || !url) return url;
+  if (!/cdn\.shopify\.com/i.test(url)) return url;      // only Shopify can crop for us
+  const clean = String(url).replace(/([?&])(width|height|crop)=[^&]*/gi, '').replace(/[?&]$/, '');
+  const sep = clean.indexOf('?') >= 0 ? '&' : '?';
+  return clean + sep + 'width=' + dims[0] + '&height=' + dims[1] + '&crop=center';
+}
 
 /* Shared atoms — identical markup to the transactional templates */
 const A = {
@@ -564,6 +589,9 @@ const BLOCKS = [
   hint: 'Two-up product cards with image, name and price.',
   fields: [
     { key: 'label', label: 'Section label (optional)', type: 'text', def: 'In This Drop' },
+    { key: 'shape', label: 'Match all image shapes', type: 'select',
+      options: ['Square', 'Portrait 4:5', 'Portrait 3:4', 'Landscape 4:3', 'Original'], def: 'Square',
+      help: 'Crops every Shopify CDN image to the same ratio so all products render identically sized. Non-Shopify URLs are left alone.' },
     { key: 'items', label: 'Products', type: 'list', sub: [
         { key: 'img', label: 'Image URL', type: 'url', def: '' },
         { key: 'scale', label: 'Size', type: 'range', min: 50, max: 100, step: 1, unit: '%', def: 100,
@@ -579,20 +607,30 @@ const BLOCKS = [
   ],
   render: (v) => {
     const items = v.items || [];
-    const BOX = 218;                       /* image area stays this tall whatever the scale, */
-    let out = '';                          /* so names and prices below stay on one line     */
+    const BOX = 218;
+    let out = '';
     for (let i = 0; i < items.length; i += 2) {
-      const cells = [items[i], items[i + 1]].map((it, j) => {
+      const pair = [items[i], items[i + 1]];
+      /* The fixed-height box only earns its keep when the two cells are scaled
+         differently — otherwise it just adds dead space under images on mobile. */
+      const scales = pair.filter(Boolean).map(x => Math.max(20, Math.min(100, Number(x.scale) || 100)));
+      const needBox = scales.length === 2 && scales[0] !== scales[1];
+
+      const cells = pair.map((it, j) => {
         if (!it) return '<td width="50%"></td>';
         const pct = Math.max(20, Math.min(100, Number(it.scale) || 100));
         const w = Math.round(BOX * pct / 100);
-        const img = '<img src="' + esc(it.img) + '" width="' + w + '" alt="' + esc(it.title) +
+        const src = cdnShape(it.img, v.shape || 'Square');
+        const img = '<img src="' + esc(src) + '" width="' + w + '" alt="' + esc(it.title) +
           '" style="display:block;border:0;border-radius:10px;width:100%;max-width:' + w + 'px;height:auto;margin:0 auto;background:#000;">';
-        return '<td width="50%" align="center" style="padding:' + (j === 0 ? '0 4px 12px 0' : '0 0 12px 4px') + ';vertical-align:top;text-align:center;">' +
-          '<table width="100%" cellpadding="0" cellspacing="0"><tr>' +
+        const link = '<a href="' + esc(it.href) + '" style="text-decoration:none;">' + img + '</a>';
+        const media = needBox
+          ? '<table width="100%" cellpadding="0" cellspacing="0"><tr>' +
             '<td height="' + BOX + '" align="center" valign="middle" style="height:' + BOX + 'px;text-align:center;">' +
-              '<a href="' + esc(it.href) + '" style="text-decoration:none;">' + img + '</a>' +
-            '</td></tr></table>' +
+            link + '</td></tr></table>'
+          : link;
+        return '<td width="50%" align="center" style="padding:' + (j === 0 ? '0 4px 12px 0' : '0 0 12px 4px') + ';vertical-align:top;text-align:center;">' +
+          media +
           '<div style="font-size:13px;color:' + TT.white + ';font-weight:600;margin-top:8px;line-height:1.4;text-align:center;">' + esc(it.title) + '</div>' +
           '<div style="font-size:12px;color:' + TT.muted + ';margin-top:2px;text-align:center;">' + esc(it.price) + '</div></td>';
       }).join('');
@@ -725,10 +763,11 @@ const BLOCKS = [
     const shop = 'Shop <span style="white-space:nowrap;">TWNTY-TWO&reg;&nbsp;<img src="' + TT.xx + '" width="14" height="14" alt="" style="border:0;border-radius:3px;vertical-align:middle;"></span>';
     const ig = 'Follow Us on <span style="white-space:nowrap;">Instagram&nbsp;<img src="' + TT.ig + '" width="14" height="14" alt="" style="border:0;border-radius:3px;vertical-align:middle;"></span>';
     let h = '';
+    /* Tagline sits close under the rule; the closing line gets more air below it. */
     if (v.tagline || v.closing) {
-      h += '<tr><td style="padding-top:26px;border-top:1px solid ' + TT.hair + ';">' +
-        (v.tagline ? '<div style="font-size:9px;color:' + TT.muted + ';font-weight:700;letter-spacing:.6px;line-height:1.6;margin-top:16px;">' + esc(v.tagline) + '</div>' : '') +
-        (v.closing ? '<p style="font-size:12px;color:' + TT.body + ';margin:' + (v.tagline ? '10px' : '14px') + ' 0 0;line-height:1.7;">' + nl2br(v.closing) + '</p>' : '') +
+      h += '<tr><td style="padding-top:' + (v.tagline ? '20px' : '26px') + ';border-top:1px solid ' + TT.hair + ';">' +
+        (v.tagline ? '<div style="font-size:9px;color:' + TT.muted + ';font-weight:700;letter-spacing:.6px;line-height:1.6;margin:0;">' + esc(v.tagline) + '</div>' : '') +
+        (v.closing ? '<p style="font-size:12px;color:' + TT.body + ';margin:' + (v.tagline ? '20px' : '14px') + ' 0 0;line-height:1.7;">' + nl2br(v.closing) + '</p>' : '') +
         '</td></tr>';
     }
     h += '<tr><td style="padding-top:20px;"><table width="100%" cellpadding="0" cellspacing="0">' +
@@ -749,24 +788,37 @@ BLOCKS.forEach(b => { BLOCK_BY_ID[b.id] = b; });
    Shopify Messaging already renders the logo band above and the social /
    address / unsubscribe footer below, so the logo header is OFF by default.
    The campaign tag ("NEW DROP") then leads the card instead. */
+/* display:block images ignore td align — they need an explicit margin */
+const blockMargin = (al) =>
+  al === 'right' ? 'margin:0 0 0 auto;' : al === 'left' ? 'margin:0;' : 'margin:0 auto;';
+
+const tagDiv = (text, al) =>
+  '<div style="font-size:12px;color:' + TT.muted +
+  ';font-weight:700;letter-spacing:1.6px;text-transform:uppercase;text-align:' + al + ';">' +
+  esc(text) + '</div>';
+
+/* Logo header. Logo and campaign tag each get their own alignment; the tag
+   stacks underneath the logo rather than sitting opposite it. */
 function renderHeader(s) {
   if (!s.showHeader) return '';
+  const la = s.logoAlign || 'center';
+  const ta = s.tagAlign || 'center';
+  let rows = '<tr><td align="' + la + '" style="text-align:' + la + ';">' +
+    '<a href="' + esc(s.logoUrl || 'https://twnty-two.com') + '">' +
+    '<img src="' + TT.logo + '" width="72" height="72" alt="TWNTY-TWO&reg;" style="display:block;border:0;border-radius:12px;' + blockMargin(la) + '"></a></td></tr>';
+  if (s.showTag !== false && s.eyebrow)
+    rows += '<tr><td align="' + ta + '" style="padding-top:14px;text-align:' + ta + ';">' + tagDiv(s.eyebrow, ta) + '</td></tr>';
   return '<tr><td align="center" style="padding:44px 20px 20px;">' +
-    '<table width="100%" cellpadding="0" cellspacing="0" style="max-width:' + TT.width + 'px;"><tr>' +
-    '<td style="text-align:left;"><a href="' + esc(s.logoUrl || 'https://twnty-two.com') + '"><img src="' + TT.logo + '" width="72" height="72" alt="TWNTY-TWO&reg;" style="display:block;border:0;border-radius:12px;"></a></td>' +
-    '<td style="text-align:right;font-size:13px;color:' + TT.muted + ';font-weight:600;letter-spacing:1px;">' + esc(s.eyebrow || '') + '</td>' +
-    '</tr></table></td></tr>';
+    '<table width="100%" cellpadding="0" cellspacing="0" align="center" style="width:100%;max-width:' + TT.width + 'px;margin:0 auto;">' +
+    rows + '</table></td></tr>';
 }
 
-/* When the logo header is off, the campaign tag becomes the first line of the card.
-   Optional on its own — showTag false hides it without clearing the text. */
+/* With the logo header off, the campaign tag leads the card instead. */
 function renderTag(s) {
   if (s.showTag === false || s.showHeader || !s.eyebrow) return '';
-  const al = s.align === 'left' ? 'left' : 'center';
+  const al = s.tagAlign || 'center';
   return '<tr><td align="' + al + '" style="padding-bottom:14px;text-align:' + al + ';">' +
-    '<div style="font-size:12px;color:' + TT.muted +
-    ';font-weight:700;letter-spacing:1.6px;text-transform:uppercase;text-align:' + al + ';">' +
-    esc(s.eyebrow) + '</div></td></tr>';
+    tagDiv(s.eyebrow, al) + '</td></tr>';
 }
 
 /* Body only — this is what gets pasted into Shopify Email custom Liquid,
@@ -890,7 +942,7 @@ const SHIP_BAR = 'ORDERS OVER $100 — FREE SHIPPING 🇺🇸';
 function starterDrop() {
   return {
     id: uid(), name: 'Drop Announcement', kind: 'drop',
-    settings: { showHeader: false, eyebrow: 'NEW DROP', logoUrl: 'https://twnty-two.com', align: 'center', showTag: true,
+    settings: { showHeader: false, eyebrow: 'NEW DROP', logoUrl: 'https://twnty-two.com', align: 'center', showTag: true, tagAlign: 'center', logoAlign: 'center',
       subject: 'NEGRO LEAGUE COLLECTION NOW AVAILABLE', preheader: SHIP_BAR },
     blocks: [
       mkBlock('shipbar', { text: SHIP_BAR, href: '' }),
@@ -907,7 +959,7 @@ function starterDrop() {
 function starterSale() {
   return {
     id: uid(), name: 'Sale / Promo', kind: 'sale',
-    settings: { showHeader: false, eyebrow: 'LIMITED TIME', logoUrl: 'https://twnty-two.com', align: 'center', showTag: true,
+    settings: { showHeader: false, eyebrow: 'LIMITED TIME', logoUrl: 'https://twnty-two.com', align: 'center', showTag: true, tagAlign: 'center', logoAlign: 'center',
       subject: '20% OFF SITEWIDE — THIS WEEKEND ONLY', preheader: SHIP_BAR },
     blocks: [
       mkBlock('shipbar', { text: SHIP_BAR, href: '' }),
@@ -999,7 +1051,10 @@ function rangeField(f, v, nm) {
     (f.help ? '<em class="rhelp">' + f.help + '</em>' : '') + '</label>';
 }
 
-function fw(f, input) { return '<label class="fld"><span>' + f.label + '</span>' + input + '</label>'; }
+function fw(f, input) {
+  return '<label class="fld"><span>' + f.label + '</span>' + input +
+    (f.help ? '<em class="rhelp">' + f.help + '</em>' : '') + '</label>';
+}
 function escHtml(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 
 function renderList(b, f, arr) {
@@ -1038,6 +1093,8 @@ function renderMeta() {
   $('#preheader').value = (tpl.settings && tpl.settings.preheader) || '';
   $('#showheader').checked = tpl.settings.showHeader === true;
   $('#showtag').checked = tpl.settings.showTag !== false;
+  $('#tagalign').value = tpl.settings.tagAlign || 'center';
+  $('#logoalign').value = tpl.settings.logoAlign || 'center';
   $('#aligncenter').checked = (tpl.settings.align || 'center') === 'center';
 }
 
@@ -1167,6 +1224,8 @@ document.addEventListener('input', (e) => {
 document.addEventListener('change', (e) => {
   if (e.target.id === 'showheader') { tpl.settings.showHeader = e.target.checked; renderPreview(); }
   if (e.target.id === 'showtag') { tpl.settings.showTag = e.target.checked; renderPreview(); }
+  if (e.target.id === 'tagalign') { tpl.settings.tagAlign = e.target.value; renderPreview(); }
+  if (e.target.id === 'logoalign') { tpl.settings.logoAlign = e.target.value; renderPreview(); }
   if (e.target.id === 'aligncenter') { tpl.settings.align = e.target.checked ? 'center' : 'left'; renderPreview(); }
   if (e.target.dataset.bid && e.target.tagName === 'SELECT') {
     const b = tpl.blocks.find(x => x.id === e.target.dataset.bid);
@@ -1247,7 +1306,7 @@ function bindToolbar() {
   $('#new-drop').onclick = () => { tpl = starterDrop(); selected = null; renderAll(); refreshSaved(); };
   $('#new-sale').onclick = () => { tpl = starterSale(); selected = null; renderAll(); refreshSaved(); };
   $('#new-blank').onclick = () => {
-    tpl = { id: uid(), name: 'Untitled Email', kind: 'custom', settings: { showHeader: false, eyebrow: '', align: 'center', showTag: true, subject: '', preheader: SHIP_BAR }, blocks: [mkBlock('headline'), mkBlock('button'), mkBlock('footer')] };
+    tpl = { id: uid(), name: 'Untitled Email', kind: 'custom', settings: { showHeader: false, eyebrow: '', align: 'center', showTag: true, tagAlign: 'center', logoAlign: 'center', tagAlign: 'center', logoAlign: 'center', subject: '', preheader: SHIP_BAR }, blocks: [mkBlock('headline'), mkBlock('button'), mkBlock('footer')] };
     selected = null; renderAll(); refreshSaved();
   };
 
