@@ -17,13 +17,20 @@ Subject and preheader are stored with the template but never appear in the
 Liquid — Custom Liquid cannot set them. Copy them into Shopify's Email details
 panel by hand (there are Copy buttons next to each).
 
-## Product image sizing
+## Product image sizing — Shopify CDN behaviour (measured)
 
-Each product in a Product Grid has a **Size** slider (50–100%). It only shrinks —
-email clients don't support the CSS needed to zoom in. Shrink the item shot too
-close until it matches its neighbour. The image area stays a fixed 218px tall at
-any scale so names and prices stay aligned. For a real tighter crop, append
-`&width=800&height=800&crop=center` to a Shopify CDN image URL.
+On `/files/` URLs the Shopify CDN **ignores** `crop=center` and the legacy
+`_1200x1200_crop_center` filename form. Asking for 1200x1200 returns 1200x1097 —
+it only honours `width`.
+
+It DOES honour `pad_color`, which returns the exact box requested and letterboxes
+the remainder. So **Match all image shapes** appends
+`&width=1200&height=1200&pad_color=<hex>`. Every product then renders identically
+sized, and nothing is cropped off. Set the pad colour to match the image
+background (`ffffff` for shots on white) and the padding is invisible.
+
+Each product also has a **Size** slider (50-100%) that only shrinks — email
+clients don't support the CSS needed to zoom in.
 
 ## Saved templates
 

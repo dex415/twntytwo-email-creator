@@ -293,10 +293,12 @@ const row = (inner, pad, align) =>
   '<tr><td' + (align ? ' align="' + align + '"' : '') +
   ' style="' + (pad || 'padding-top:24px;') + '">' + inner + '</td></tr>';
 
-/* Normalise a Shopify CDN image to a fixed aspect ratio so every product cell
-   is the same shape. Shopify crops server-side, so there is no dead space and
-   nothing depends on CSS the email client might strip. Non-Shopify URLs pass
-   through untouched. */
+/* Normalise a Shopify CDN image so every product cell is exactly the same shape.
+   MEASURED, not assumed: on /files/ URLs Shopify IGNORES both `crop=center` and
+   the legacy `_1200x1200_crop_center` filename form — asking for 1200x1200
+   returns 1200x1097. It DOES honour `pad_color`, which returns the exact box
+   requested and letterboxes the rest. Padding also never cuts off product, which
+   matters for hats. Non-Shopify URLs pass through untouched. */
 const SHAPES = {
   'Original': null,
   'Square': [1200, 1200],
@@ -304,13 +306,14 @@ const SHAPES = {
   'Portrait 3:4': [1200, 1600],
   'Landscape 4:3': [1600, 1200]
 };
-function cdnShape(url, shape) {
+function cdnShape(url, shape, pad) {
   const dims = SHAPES[shape];
   if (!dims || !url) return url;
-  if (!/cdn\.shopify\.com/i.test(url)) return url;      // only Shopify can crop for us
-  const clean = String(url).replace(/([?&])(width|height|crop)=[^&]*/gi, '').replace(/[?&]$/, '');
+  if (!/cdn\.shopify\.com/i.test(url)) return url;
+  const hex = String(pad || 'ffffff').replace(/[^0-9a-f]/gi, '').slice(0, 6) || 'ffffff';
+  const clean = String(url).replace(/([?&])(width|height|crop|pad_color)=[^&]*/gi, '').replace(/[?&]$/, '');
   const sep = clean.indexOf('?') >= 0 ? '&' : '?';
-  return clean + sep + 'width=' + dims[0] + '&height=' + dims[1] + '&crop=center';
+  return clean + sep + 'width=' + dims[0] + '&height=' + dims[1] + '&pad_color=' + hex;
 }
 
 /* Shared atoms — identical markup to the transactional templates */
@@ -591,7 +594,10 @@ const BLOCKS = [
     { key: 'label', label: 'Section label (optional)', type: 'text', def: 'In This Drop' },
     { key: 'shape', label: 'Match all image shapes', type: 'select',
       options: ['Square', 'Portrait 4:5', 'Portrait 3:4', 'Landscape 4:3', 'Original'], def: 'Square',
-      help: 'Crops every Shopify CDN image to the same ratio so all products render identically sized. Non-Shopify URLs are left alone.' },
+      help: 'Forces every Shopify CDN image into the same box so products render identically sized. Shopify pads rather than crops on Files URLs, so nothing gets cut off — set the pad colour to match your image background and the padding is invisible.' },
+    { key: 'pad', label: 'Pad colour (hex)', type: 'text', def: 'ffffff',
+      showIfNot: { key: 'shape', is: 'Original' },
+      help: 'ffffff for product shots on white, 000000 once they are re-exported on black. No # needed.' },
     { key: 'items', label: 'Products', type: 'list', sub: [
         { key: 'img', label: 'Image URL', type: 'url', def: '' },
         { key: 'scale', label: 'Size', type: 'range', min: 50, max: 100, step: 1, unit: '%', def: 100,
@@ -620,7 +626,7 @@ const BLOCKS = [
         if (!it) return '<td width="50%"></td>';
         const pct = Math.max(20, Math.min(100, Number(it.scale) || 100));
         const w = Math.round(BOX * pct / 100);
-        const src = cdnShape(it.img, v.shape || 'Square');
+        const src = cdnShape(it.img, v.shape || 'Square', v.pad);
         const img = '<img src="' + esc(src) + '" width="' + w + '" alt="' + esc(it.title) +
           '" style="display:block;border:0;border-radius:10px;width:100%;max-width:' + w + 'px;height:auto;margin:0 auto;background:#000;">';
         const link = '<a href="' + esc(it.href) + '" style="text-decoration:none;">' + img + '</a>';
@@ -757,7 +763,7 @@ const BLOCKS = [
     { key: 'shopUrl', label: 'Shop URL', type: 'url', def: 'https://twnty-two.com' },
     { key: 'csUrl', label: 'Customer Service URL', type: 'url', def: 'https://help.twnty-two.nyc' },
     { key: 'igUrl', label: 'Instagram URL', type: 'url', def: 'https://instagram.com/twntytwo_xx' },
-    { key: 'subUrl', label: 'Subscribe URL', type: 'url', def: 'https://subscribe.twnty-two.nyc' }
+    { key: 'subUrl', label: 'Subscribe URL', type: 'url', def: 'https://twnty-two.com/pages/subscribe' }
   ],
   render: (v) => {
     const shop = 'Shop <span style="white-space:nowrap;">TWNTY-TWO&reg;&nbsp;<img src="' + TT.xx + '" width="14" height="14" alt="" style="border:0;border-radius:3px;vertical-align:middle;"></span>';
@@ -1030,7 +1036,10 @@ function renderCanvas() {
 function renderFields(b) {
   const def = BLOCK_BY_ID[b.type];
   if (!def || !def.fields.length) return '<div class="nofields">No settings.</div>';
-  return def.fields.filter(f => !f.showIf || b.values[f.showIf.key] === f.showIf.is).map(f => {
+  return def.fields.filter(f =>
+    (!f.showIf || b.values[f.showIf.key] === f.showIf.is) &&
+    (!f.showIfNot || b.values[f.showIfNot.key] !== f.showIfNot.is)
+  ).map(f => {
     const v = b.values[f.key];
     const nm = 'data-bid="' + b.id + '" data-key="' + f.key + '"';
     if (f.type === 'textarea') return fw(f, '<textarea ' + nm + ' rows="3">' + escHtml(v) + '</textarea>');
